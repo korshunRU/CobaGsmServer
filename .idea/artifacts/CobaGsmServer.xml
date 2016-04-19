@@ -1,0 +1,15 @@
+<component name="ArtifactManager">
+  <artifact build-on-make="true" name="CobaGsmServer">
+    <output-path>$PROJECT_DIR$/out/artifacts/CobaGsmServer</output-path>
+    <root id="root">
+      <element id="directory" name="lib">
+        <element id="library" level="project" name="commons-io-2.4" />
+        <element id="library" level="project" name="json-20160212" />
+        <element id="library" level="project" name="mysql-connector-java-5.1.38-bin" />
+      </element>
+      <element id="archive" name="CobaGsmServer.jar">
+        <element id="module-output" name="CobaGsmServer" />
+      </element>
+    </root>
+  </artifact>
+</component>
