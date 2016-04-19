@@ -38,7 +38,7 @@ class GcmSender {
 
     void send(String str, String token) {
 
-        System.out.println(str + " " + token);
+//        System.out.println(str + " " + token);
 
         try {
             // Prepare JSON containing the GCM message content. What to send and where to send.

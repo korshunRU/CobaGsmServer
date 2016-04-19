@@ -108,6 +108,13 @@ public class DeviceConnectThread
 
 
 
+    /**
+     *  Функция достает из БД всю необходимую информацию, для формирования и отправки push сообщения: это номер объекта,
+     *  адрес, описание события и токен gcm
+     * @param event                 - код события, который пришел с блока
+     * @param code                  - hex номер радиоканала объекта
+     * @return                      - возвращается массив { строкадляотправки, токен}
+     */
     private String[] getDataForPush(String event, String code) {
 
         Connection connection =                             createConnect();
@@ -158,6 +165,7 @@ public class DeviceConnectThread
             }
         }
 
+        System.out.println(returnArray[0]);
 
         return returnArray;
     }
