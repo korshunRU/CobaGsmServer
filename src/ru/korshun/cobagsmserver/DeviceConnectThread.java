@@ -149,7 +149,8 @@ public class DeviceConnectThread
             if(rs.first()) {
 
                 returnArray[0] =                            getCurrentDateAndTime() + " (" +
-                                                            rs.getString("number") + ", " + rs.getString("address") + ") " +
+                                                            rs.getString("number") + ", " +
+                                                            decodeStr(rs.getString("address")) + ") " +
                                                             rs.getString("desc");
                 returnArray[1] =                            rs.getString("token");
 
