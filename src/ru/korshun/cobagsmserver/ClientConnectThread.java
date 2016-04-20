@@ -91,7 +91,7 @@ public class ClientConnectThread
 
 
                     case "sendToken":
-                        updateToken(data.getString("token"), data.getInt("userId"));
+                        updateToken(data.getString("token"), data.getInt("userId"), out);
                         break;
 
 
@@ -468,6 +468,20 @@ public class ClientConnectThread
 
 
 
+    /**
+     *  Отправка статуса операции клиенту
+     * @param out                       - ссылка на DataOutputStream
+     * @param status                    - числовое значение статуса операции
+     * @throws IOException
+     */
+    private void sendOperationStatusToClient(DataOutputStream out, int status) throws IOException {
+        sendOperationStatusToClient(out, status, null, null);
+    }
+
+
+
+
+
 
     /**
      *  Отправка статуса операции клиенту
@@ -496,9 +510,6 @@ public class ClientConnectThread
     }
 
 
-
-
-
     /**
      *  Обновление gcm ключа клиента
      * @param token                 - ключ
@@ -506,6 +517,18 @@ public class ClientConnectThread
      * @throws IOException
      */
     private void updateToken(String token, int userId) throws IOException {
+        updateToken(token, userId, null);
+    }
+
+
+    /**
+     *  Обновление gcm ключа клиента
+     * @param token                 - ключ
+     * @param userId                - id пользователя
+     * @param out                   - ссылка на DataOutputStream
+     * @throws IOException
+     */
+    private void updateToken(String token, int userId, DataOutputStream out) throws IOException {
 
         Connection connection =                             createConnect();
         PreparedStatement ps;
@@ -515,8 +538,8 @@ public class ClientConnectThread
         }
 
         String query = "UPDATE " + tablePrefix + "users " +
-                "SET " + tablePrefix + "users.gcm_hash = ? " +
-                "WHERE " + tablePrefix + "users.id = ?;";
+                        "SET " + tablePrefix + "users.gcm_hash = ? " +
+                        "WHERE " + tablePrefix + "users.id = ?;";
 
         try {
             ps =                                            connection.prepareStatement(query);
@@ -526,6 +549,9 @@ public class ClientConnectThread
 
             ps.executeUpdate();
 
+            if(out != null) {
+                sendOperationStatusToClient(out, STATUS_COMPLITE);
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
