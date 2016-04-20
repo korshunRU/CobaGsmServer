@@ -262,11 +262,13 @@ public class ClientConnectThread
             }
 
             signals.put("signals", array);
-            returnStatus.put("data", signals);
-            returnStatus.put("status", 1);
+//            returnStatus.put("data", signals);
+//            returnStatus.put("status", 1);
 
-            out.writeUTF(returnStatus.toString());
-            out.flush();
+            sendOperationStatusToClient(out, STATUS_COMPLITE, signals);
+
+//            out.writeUTF(returnStatus.toString());
+//            out.flush();
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -348,11 +350,13 @@ public class ClientConnectThread
             }
 
             objects.put("objects", array);
-            returnStatus.put("data", objects);
-            returnStatus.put("status", 1);
+//            returnStatus.put("data", objects);
+//            returnStatus.put("status", 1);
 
-            out.writeUTF(returnStatus.toString());
-            out.flush();
+            sendOperationStatusToClient(out, STATUS_COMPLITE, objects);
+
+//            out.writeUTF(returnStatus.toString());
+//            out.flush();
 
         } catch (SQLException e) {
             e.printStackTrace();
