@@ -35,17 +35,8 @@ class Settings {
     private final int                   MAX_CONNECT_COUNT = 15;
 
 
-    /**
-     *  "Соль" пароля
-     */
-    private final String                PASS_SALT =         "7205c1640724561a622e2866e6f2329b";
 
-
-    Settings() {
-
-
-
-    }
+    Settings() { }
 
     String getDATABASE_NAME() {
         return DATABASE_NAME;
@@ -83,7 +74,4 @@ class Settings {
         return MAX_CONNECT_COUNT;
     }
 
-    public String getPASS_SALT() {
-        return PASS_SALT;
-    }
 }

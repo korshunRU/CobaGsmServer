@@ -6,10 +6,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.*;
-import java.math.BigInteger;
 import java.net.Socket;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -405,7 +402,7 @@ public class ClientConnectThread
 
             ps.setString(1, login.trim());
             ps.setString(2, login.trim());
-            ps.setString(3, md5(pass.trim()) + Main.getLoader().getSettingsInstance().getPASS_SALT());
+            ps.setString(3, pass);
 
             rs =                                            ps.executeQuery();
 
@@ -603,30 +600,6 @@ public class ClientConnectThread
             return false;
         }
         return true;
-    }
-
-
-
-
-
-    /**
-     *  Получение md5 хэша строки
-     * @param text          - строка для кодирования
-     * @return              - md5 строки
-     */
-    private String md5(final String text){
-        try{
-            MessageDigest md =                              MessageDigest.getInstance("MD5");
-            md.update(text.getBytes());
-            String hash =                                   new BigInteger(1, md.digest()).toString(16);
-            while(hash.length() < 32) {
-                hash =                                      "0" + hash;
-            }
-            return hash;
-        }catch(NoSuchAlgorithmException e){
-            e.printStackTrace();
-        }
-        return null;
     }
 
 

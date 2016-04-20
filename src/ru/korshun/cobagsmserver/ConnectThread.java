@@ -2,7 +2,6 @@ package ru.korshun.cobagsmserver;
 
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -55,17 +54,12 @@ public abstract class ConnectThread {
 
 
 
-
+    /**
+     *  Функция выдергивает из пришедшей строки с блока код события и номер радиоканала
+     * @param inStr             - входящая строка вида 7912123456789=4061/B8 #13B1
+     * @return                  - возвращается массив типа {кодсобытия, радиоканал}
+     */
     protected String[] parseStrForPush(String inStr) {
-
-//        "7912123456789=4061/B8 #13B1"
-
-//        String event = inStr.substring(inStr.indexOf("/") + 1, inStr.indexOf("#") - 1);
-//        String channel = inStr.substring(inStr.indexOf("#") + 1, inStr.indexOf("#") + 5);
-
-//        System.out.println(event + " " + channel);
-
-//        String output = getCurrentDateAndTime() + " (5041, Космонавтов 12-123 (1 эт.)) Открытие";
 
         return new String[]{
                 inStr.substring(inStr.indexOf("/") + 1, inStr.indexOf("#") - 1),
@@ -73,6 +67,7 @@ public abstract class ConnectThread {
         };
 
     }
+
 
 
 

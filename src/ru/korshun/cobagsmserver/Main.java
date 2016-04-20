@@ -65,6 +65,9 @@ public class Main {
     }
 
 
+    /**
+     *  Проверка доступности БД при запуске сервера
+     */
     private static void checkConnectionToMySql() {
         Connection connection;
         try {
