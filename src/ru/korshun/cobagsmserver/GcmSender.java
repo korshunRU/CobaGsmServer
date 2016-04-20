@@ -88,7 +88,8 @@ class GcmSender {
 //            System.out.println("Unable to send GCM message.");
 //            System.out.println("Please ensure that API_KEY has been replaced by the server " +
 //                    "API key, and that the device's registration TOKEN_G3 is correct (if specified).");
-            e.printStackTrace();
+//            e.printStackTrace();
+            System.out.println("ERROR!!!! " + e.getMessage());
         }
     }
 
