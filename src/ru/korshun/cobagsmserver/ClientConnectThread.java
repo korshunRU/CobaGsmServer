@@ -330,8 +330,8 @@ public class ClientConnectThread
             while (rs.next()) {
 
                 String number =                             rs.getString("number");
-                String type =                               decodeStr(rs.getString("type"));
-                String address =                            decodeStr(rs.getString("address"));
+                String type =                               rs.getString("type");
+                String address =                            rs.getString("address");
 
                 if(number == null || type == null || address == null) {
                     continue;
@@ -340,8 +340,8 @@ public class ClientConnectThread
                 Map<String, String> object =                new HashMap<>();
 
                 object.put("number", number);
-                object.put("type", type);
-                object.put("address", address);
+                object.put("type", decodeStr(type).trim());
+                object.put("address", decodeStr(address).trim());
 
                 array.put(object);
 
