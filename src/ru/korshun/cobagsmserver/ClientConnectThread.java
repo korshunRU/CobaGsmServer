@@ -333,15 +333,15 @@ public class ClientConnectThread
                 String type =                               rs.getString("type");
                 String address =                            rs.getString("address");
 
-                if(number == null || type == null || address == null) {
+                if(number == null) {
                     continue;
                 }
 
                 Map<String, String> object =                new HashMap<>();
 
                 object.put("number", number);
-                object.put("type", decodeStr(type).trim());
-                object.put("address", decodeStr(address).trim());
+                object.put("type", type != null ? decodeStr(type).trim() : "-");
+                object.put("address", address != null ? decodeStr(address).trim() : "-");
 
                 array.put(object);
 
