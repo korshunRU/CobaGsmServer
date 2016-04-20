@@ -56,13 +56,13 @@ public abstract class ConnectThread {
 
     /**
      *  Функция выдергивает из пришедшей строки с блока код события и номер радиоканала
-     * @param inStr             - входящая строка вида 7912123456789=4061/B8 #13B1
+     * @param inStr             - входящая строка вида 7912123456789=4061/B8 дфаовдлавыдал
      * @return                  - возвращается массив типа {кодсобытия, радиоканал}
      */
     protected String[] parseStrForPush(String inStr) {
 
         return new String[]{
-                inStr.substring(inStr.indexOf("/") + 1, inStr.indexOf("#") - 1),
+                inStr.substring(inStr.indexOf("/") + 1, inStr.indexOf(" ")),
                 inStr.substring(inStr.indexOf("=") + 1, inStr.indexOf("/"))
         };
 
