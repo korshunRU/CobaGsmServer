@@ -61,9 +61,9 @@ public abstract class ConnectThread {
      */
     protected String[] parseStrForPush(String inStr) {
 
-        return new String[]{
+        return new String[]{//"7912123456789=4061/B8 #13B1"
                 inStr.substring(inStr.indexOf("/") + 1, inStr.indexOf("#") - 1),
-                inStr.substring(inStr.indexOf("#") + 1, inStr.indexOf("#") + 5)
+                inStr.substring(inStr.indexOf("=") + 1, inStr.indexOf("/"))
         };
 
     }
