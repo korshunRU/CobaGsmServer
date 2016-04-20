@@ -33,7 +33,7 @@ public class DeviceConnectThread
         outputStr +=                                        inStr;
         System.out.println(outputStr);
 
-        if(inStr.startsWith("7") && inStr.contains("=") && inStr.contains("#") && inStr.contains("/")) {
+        if(inStr.startsWith("7") && inStr.contains("=") && inStr.contains("/")) {
             data =                                          parseStrForPush(inStr);
 
             if (addEventToMySql(data[0], data[1])) {

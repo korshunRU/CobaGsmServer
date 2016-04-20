@@ -47,7 +47,7 @@ public class ClientConnectThread
                 inStr =                                     in.readUTF();
 
                 if(!checkJSON(inStr)) {
-                    if(inStr.startsWith("7") && inStr.contains("=") && inStr.contains("#") && inStr.contains("/")) {
+                    if(inStr.startsWith("7") && inStr.contains("=") && inStr.contains("/")) {
                         parseStrForPush(inStr);
                     }
                     else {
