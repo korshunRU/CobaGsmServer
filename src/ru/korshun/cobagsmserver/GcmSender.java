@@ -70,13 +70,13 @@ class GcmSender {
             URL url = new URL("https://android.googleapis.com/gcm/send");
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("Authorization", "key=" + API_KEY);
-            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
 
             // Send GCM message content.
             OutputStream outputStream = conn.getOutputStream();
-            outputStream.write(jGcmData.toString().getBytes());
+            outputStream.write(jGcmData.toString().getBytes("UTF-8"));
 
             // Read GCM response.
             InputStream inputStream = conn.getInputStream();
