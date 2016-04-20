@@ -71,4 +71,30 @@ public abstract class ConnectThread {
 
 
 
+    /**
+     *  Функция декодирует входящую строку, полученную из БД
+     * @param str               - строка для декодирования
+     * @return                  - возвращается декодированная строка
+     */
+    protected String decodeStr(String str) {
+        if(str != null && str.length() > 0) {
+            String decodeString =                           "",
+                    helpStr =                               "";
+            for (int x = 0; x < str.length(); x++) {
+                if (!Character.toString(str.charAt(x)).equals(Main.getLoader().getSettingsInstance().getWORDS_DIVIDER())) {
+                    helpStr +=                              Character.toString(str.charAt(x));
+                } else {
+                    decodeString +=                         Main.getLoader().getSettingsInstance().getWORDS_LIST()
+                                                                .get(Integer.parseInt(helpStr));
+                    helpStr =                               "";
+                }
+            }
+            return decodeString;
+        }
+        return null;
+    }
+
+
+
+
 }

@@ -330,8 +330,8 @@ public class ClientConnectThread
             while (rs.next()) {
 
                 String number =                             rs.getString("number");
-                String type =                               rs.getString("type");
-                String address =                            rs.getString("address");
+                String type =                               decodeStr(rs.getString("type"));
+                String address =                            decodeStr(rs.getString("address"));
 
                 if(number == null || type == null || address == null) {
                     continue;
