@@ -71,9 +71,9 @@ public class Main {
     private static void checkConnectionToMySql() {
         Connection connection;
         try {
-            connection =                                    Main.getLoader().getSqlInstance().getConnection();
+            connection =                                    getLoader().getSqlInstance().getConnection();
             System.out.println("Соединение с БД работает");
-            Main.getLoader().getSqlInstance().disconnectionFromSql(connection);
+            getLoader().getSqlInstance().disconnectionFromSql(connection);
         } catch (SQLException e) {
             System.out.println("Ошибка при соединении с БД!!!! " + e.getMessage());
         }

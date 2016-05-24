@@ -203,7 +203,7 @@ public class ClientConnectThread
         PreparedStatement ps;
 
         JSONObject signals =                                new JSONObject();
-        JSONObject returnStatus =                           new JSONObject();
+//        JSONObject returnStatus =                           new JSONObject();
         JSONArray array =                                   new JSONArray();
 
         if(connection == null) {
@@ -301,7 +301,7 @@ public class ClientConnectThread
         ResultSet rs;
 
         JSONObject objects =                                new JSONObject();
-        JSONObject returnStatus =                           new JSONObject();
+//        JSONObject returnStatus =                           new JSONObject();
         JSONArray array =                                   new JSONArray();
 
         if(connection == null) {
@@ -421,10 +421,12 @@ public class ClientConnectThread
                     sendOperationStatusToClient(out, STATUS_COMPLITE, userIdData);
                     updateToken(token, userId);
                     addEnterDateTime(userId);
+                    System.out.println(getCurrentDateAndTime() + ": Авторизация успешна");
                 }
 
                 else {
                     sendOperationStatusToClient(out, STATUS_ERROR, "Неверные данные");
+                    System.out.println(getCurrentDateAndTime() + ": Авторизация не удалась");
                 }
 
             }
