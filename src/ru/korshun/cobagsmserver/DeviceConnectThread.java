@@ -90,7 +90,9 @@ public class DeviceConnectThread
             ps.executeUpdate();
 
         }  catch (SQLException e) {
-            System.out.println("ERROR!!!! " + e.getMessage());
+            if(!e.getMessage().contains("FOREIGN KEY (`event_id`) REFERENCES `coba_events_codes`")) {
+                System.out.println("ERROR!!!! " + e.getMessage());
+            }
 //            e.printStackTrace();
             return false;
         } finally {
