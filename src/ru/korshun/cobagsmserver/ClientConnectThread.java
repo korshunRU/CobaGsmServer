@@ -298,7 +298,7 @@ public class ClientConnectThread
 
         Connection connection =                             createConnect();
         PreparedStatement ps;
-        ResultSet rs;
+        ResultSet rs, rs1;
 
         JSONObject objects =                                new JSONObject();
 //        JSONObject returnStatus =                           new JSONObject();
@@ -318,14 +318,42 @@ public class ClientConnectThread
 
         String query = "SELECT " +  tablePrefix + "objects.number AS `number`, " +
                                     tablePrefix + "objects.name AS `type`, " +
-                                    tablePrefix + "objects.address AS `address` " +
+                                    tablePrefix + "objects.address AS `address`, " +
+                                    "IF(coba_events_codes.desc LIKE '%Постановка%', '1', " +
+                                        "IF(coba_events_codes.desc LIKE '%Снятие%', '2', '0')) as status " +
                         "FROM " + tablePrefix + "objects " +
-                        "WHERE " + tablePrefix + "objects.id_client = ?;";
+                        "LEFT JOIN coba_events_codes ON coba_events_codes.id = " +
+                                "(SELECT coba_events_gsm.event_id " +
+                                "FROM coba_events_gsm " +
+                                "WHERE coba_events_gsm.object_id = coba_objects.id " +
+                                "AND coba_events_gsm.event_id BETWEEN ? AND ? " +
+                                "ORDER BY coba_events_gsm.time DESC " +
+                                "LIMIT 0,1)" +
+
+                "WHERE " + tablePrefix + "objects.id_client = ?;";
+
+//        SELECT
+//        coba_objects.number AS number,
+//                coba_objects.name AS name,
+//        coba_objects.address AS address,
+//                IF(coba_events_codes.desc LIKE '%Постановка%', '1', IF(coba_events_codes.desc LIKE '%Снятие%', '2', '0')) as status
+//        FROM coba_objects
+//        LEFT JOIN coba_events_codes ON coba_events_codes.id = (SELECT coba_events_gsm.event_id
+//        FROM coba_events_gsm
+//        WHERE coba_events_gsm.object_id = coba_objects.id
+//        AND coba_events_gsm.event_id BETWEEN 1 AND 32
+//        ORDER BY coba_events_gsm.time DESC
+//        LIMIT 0,1)
+//        WHERE coba_objects.id_client = 19
 
         try {
             ps =                                            connection.prepareStatement(query);
 
-            ps.setInt(1, userId);
+            ps.setInt(1, 1);
+            ps.setInt(2, 35);
+            ps.setInt(3, userId);
+
+//            System.out.println(ps.toString());
 
             rs =                                            ps.executeQuery();
 
@@ -341,15 +369,62 @@ public class ClientConnectThread
 
                 Map<String, String> object =                new HashMap<>();
 
+                object.put("status", rs.getString("status"));
                 object.put("number", number);
                 object.put("type", type != null ? decodeStr(type).trim() : "-");
                 object.put("address", address != null ? decodeStr(address).trim() : "-");
+
+                query = "SELECT  DATE_FORMAT(" +  tablePrefix + "events_gsm.time, '%d.%m.%Y') AS `date`, " +
+                                "DATE_FORMAT(" + tablePrefix + "events_gsm.time, '%H:%i:%S') AS `time`, " +
+                                                tablePrefix + "events_codes.desc AS `event` " +
+                        "FROM " + tablePrefix + "events_gsm " +
+                        "LEFT JOIN " + tablePrefix + "events_codes " +
+                                "ON " + tablePrefix + "events_codes.id = " + tablePrefix + "events_gsm.event_id " +
+                                "WHERE " + tablePrefix + "events_gsm.object_id = " +
+                                    "(SELECT " + tablePrefix + "objects.id " +
+                                    "FROM " + tablePrefix + "objects " +
+                                    "WHERE " + tablePrefix + "objects.number = ? " +
+                                    "AND " + tablePrefix + "objects.id_client = ?) " +
+                        "ORDER BY " + tablePrefix + "events_gsm.time DESC " +
+                        "LIMIT 0,4;";
+
+                ps =                                            connection.prepareStatement(query);
+
+                ps.setInt(1, Integer.parseInt(number));
+                ps.setInt(2, userId);
+
+//                System.out.println(ps.toString());
+
+                rs1 =                                           ps.executeQuery();
+                int x =                                         1;
+
+                while (rs1.next()) {
+
+                    String date =                               rs1.getString("date");
+                    String time =                               rs1.getString("time");
+                    String event =                              rs1.getString("event");
+
+                    if(date == null || time == null || event == null) {
+                        continue;
+                    }
+
+                    object.put("signal" + x, String.format("%s %s %s", date, time, event));
+
+//                    object.put("date" + x, date);
+//                    object.put("time" + x, time);
+//                    object.put("event" + x, event);
+
+                    x++;
+                }
 
                 array.put(object);
 
             }
 
+//            System.out.println(array.toString());
+
             objects.put("objects", array);
+
 //            returnStatus.put("data", objects);
 //            returnStatus.put("status", 1);
 
@@ -396,7 +471,8 @@ public class ClientConnectThread
         }
 
         String query = "SELECT COUNT(*) AS `size`, " +
-                            tablePrefix + "users.id AS `id` " +
+                            tablePrefix + "users.id AS `id`, " +
+                            tablePrefix + "users.name AS `name` " +
                         "FROM " + tablePrefix + "users " +
                         "WHERE (" + tablePrefix + "users.login = ? OR " + tablePrefix + "users.login_short = ?)" +
                                 "AND " + tablePrefix + "users.password_mobile = ?;";
@@ -414,10 +490,14 @@ public class ClientConnectThread
 
                 int size =                                  rs.getInt("size");
                 int userId =                                rs.getInt("id");
+                String userName =                           rs.getString("name");
 
                 if(size == 1) {
                     JSONObject userIdData =                 new JSONObject();
-                    userIdData.put("userId", userId);
+
+                    userIdData.put("userId",                userId);
+                    userIdData.put("userName",              decodeStr(userName).trim());
+
                     sendOperationStatusToClient(out, STATUS_COMPLITE, userIdData);
                     updateToken(token, userId);
                     addEnterDateTime(userId);
