@@ -222,7 +222,9 @@ public class ClientConnectThread
 
         String query = "SELECT  DATE_FORMAT(" +  tablePrefix + "events_gsm.time, '%d.%m.%Y') AS `date`, " +
                                 "DATE_FORMAT(" + tablePrefix + "events_gsm.time, '%H:%i:%S') AS `time`, " +
-                                tablePrefix + "events_codes.desc AS `event` " +
+                                tablePrefix + "events_codes.desc AS `event`, " +
+                                "IF(coba_events_codes.desc LIKE '%Постановка%', '1', " +
+                                "IF(coba_events_codes.desc LIKE '%Снятие%', '2', '0')) as status " +
                         "FROM " + tablePrefix + "events_gsm " +
                         "LEFT JOIN " + tablePrefix + "events_codes " +
                             "ON " + tablePrefix + "events_codes.id = " + tablePrefix + "events_gsm.event_id " +
@@ -253,6 +255,7 @@ public class ClientConnectThread
 
                 Map<String, String> signal =                new HashMap<>();
 
+                signal.put("status", rs.getString("status"));
                 signal.put("date", date);
                 signal.put("time", time);
                 signal.put("event", event);
