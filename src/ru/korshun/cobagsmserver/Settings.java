@@ -11,37 +11,43 @@ class Settings {
     /**
      *   Данные для доступа к БД
      */
-    private final String                HOST_SUFFIX =       "jdbc:mysql://";
-    private final String                HOST =              "localhost:3306/";
-    private final String                DATABASE_NAME =     "coba_web_room";
-    private final String                USERNAME =          "coba";
-    private final String                PASSWORD =          "coba";
+    private final String                HOST_SUFFIX =           "jdbc:mysql://";
+    private final String                HOST =                  "localhost:3306/";
+    private final String                DATABASE_NAME =         "coba_web_room";
+    private final String                USERNAME =              "coba";
+    private final String                PASSWORD =              "coba";
 //    private final String                PASSWORD =          ",fhvfktq82";
-    private final String                DB_TABLE_PREFIX =   "coba_";
+    private final String                DB_TABLE_PREFIX =       "coba_";
 
 
     /**
      *  Порт, который "слушает" TCP сервер
      */
-    private final int                   TCP_PORT =          7777;
+    private final int                   TCP_PORT =              7777;
 
 
     /**
      *  Порт, который "слушает" UPD сервер
      */
-    private final int                   UDP_PORT =          8888;
+    private final int                   UDP_PORT =              8888;
 
 
     /**
      *  Максимальное число одновременных коннектов по всем протоколам
      */
-    private final int                   MAX_CONNECT_COUNT = 15;
+    private final int                   MAX_CONNECT_COUNT =     30;
+
+
+    /**
+     *  Количество выгружаемых из БД сигналов по умолчанию, если данное кол-во не пришло с клиента
+     */
+    private final int                   ITEMS_COUNT_DEFAULT =   100;
 
 
     /**
      *   Массив символов для кодирования\декодирования
      */
-    private final ArrayList<String>     WORDS_LIST =        new ArrayList<>(Arrays.asList(
+    private final ArrayList<String>     WORDS_LIST =            new ArrayList<>(Arrays.asList(
             "а", "б", "в", "г", "д", "е", "ё", "ж", "з", "и", "й", "к", "л", "м", "н", "о", "п", "р", "с", "т", "у", "ф", "х", "ц", "ч", "ш", "щ", "ъ", "ы", "ь", "э", "ю", "я",
             "А", "Б", "В", "Г", "Д", "Е", "Ё", "Ж", "З", "И", "Й", "К", "Л", "М", "Н", "О", "П", "Р", "С", "Т", "У", "Ф", "Х", "Ц", "Ч", "Ш", "Щ", "Ъ", "Ы", "Ь", "Э", "Ю", "Я",
             "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m",
@@ -53,7 +59,7 @@ class Settings {
     /**
      *   Разделитель символов при кодировании
      */
-    private final String                WORDS_DIVIDER =     "$";
+    private final String                WORDS_DIVIDER =         "$";
 
 
 
@@ -102,5 +108,9 @@ class Settings {
 
     public ArrayList<String> getWORDS_LIST() {
         return WORDS_LIST;
+    }
+
+    public int getITEMS_COUNT_DEFAULT() {
+        return ITEMS_COUNT_DEFAULT;
     }
 }

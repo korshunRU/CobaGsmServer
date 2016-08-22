@@ -219,6 +219,13 @@ public class ClientConnectThread
         }
 
         int objectNumber =                                  Integer.parseInt(data.getString("objectNumber"));
+        int step =                                          data.has("step") ?
+                                                                data.getInt("step") :
+                                                                Main.getLoader().getSettingsInstance().getITEMS_COUNT_DEFAULT();
+        int listCount =                                     data.has("listCount") ?
+                                                                data.getInt("listCount") :
+                                                                0;
+
 
         String query = "SELECT  DATE_FORMAT(" +  tablePrefix + "events_gsm.time, '%d.%m.%Y') AS `date`, " +
                                 "DATE_FORMAT(" + tablePrefix + "events_gsm.time, '%H:%i:%S') AS `time`, " +
@@ -233,13 +240,16 @@ public class ClientConnectThread
                             "FROM " + tablePrefix + "objects " +
                             "WHERE " + tablePrefix + "objects.number = ? " +
                                 "AND " + tablePrefix + "objects.id_client = ?) " +
-                        "ORDER BY " + tablePrefix + "events_gsm.time DESC;";
+                        "ORDER BY " + tablePrefix + "events_gsm.time DESC " +
+                        "LIMIT ?,?;";
 
         try {
             ps =                                            connection.prepareStatement(query);
 
             ps.setInt(1, objectNumber);
             ps.setInt(2, userId);
+            ps.setInt(3, listCount);
+            ps.setInt(4, listCount + step);
 
             rs =                                            ps.executeQuery();
 
