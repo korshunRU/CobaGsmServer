@@ -64,14 +64,27 @@ public class Logger {
             File path =                                     new File(Main.getLoader().getSettingsInstance().getLOG_PATH()
                                                                 + File.separator + code + File.separator + "ip.txt");
 
-            if (!checkLogPath(path.getParentFile()) && !path.getParentFile().mkdir() && !path.createNewFile()) {
+            if (!checkLogPath(path.getParentFile()) && (!path.getParentFile().mkdir() || !path.createNewFile())) {
                 System.out.println("Ошибка создания log файла");
                 return;
             }
 
             if(!existIpInFile(ip, path)) {
 
-                new BufferedWriter(new FileWriter(path, true)).write(ip + "\r\n");
+                BufferedWriter writer =                     new BufferedWriter(new FileWriter(path, true));
+
+                try {
+                    writer.write(ip + "\r\n");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    try {
+                        writer.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
 
             }
         }

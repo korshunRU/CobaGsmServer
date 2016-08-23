@@ -24,7 +24,8 @@ public class DeviceConnectThread
         String ip =                                         this.receivePacket.getAddress().toString();
 
         if(!ip.contains("127.0.0.1")) {
-            deviceIp =                                      ip.substring(ip.indexOf("/") + 1, ip.indexOf(" "));
+//            System.out.println(this.receivePacket.getAddress().toString());
+            deviceIp =                                      ip.substring(ip.indexOf("/") + 1);
             outputStr +=                                    getCurrentDateAndTime() + ": UDP Клиент подключился: " +
                                                                 deviceIp + " ";
         }
