@@ -63,30 +63,36 @@ class Settings {
 
 
 
+    /**
+     *   Папка, где будем хранить log файлы
+     */
+    private final String                LOG_PATH =              "logs";
 
-    Settings() { }
 
-    String getDATABASE_NAME() {
+
+    public Settings() { }
+
+    public String getDATABASE_NAME() {
         return DATABASE_NAME;
     }
 
-    String getDB_TABLE_PREFIX() {
+    public String getDB_TABLE_PREFIX() {
         return DB_TABLE_PREFIX;
     }
 
-    String getHOST() {
+    public String getHOST() {
         return HOST;
     }
 
-    String getHOST_SUFFIX() {
+    public String getHOST_SUFFIX() {
         return HOST_SUFFIX;
     }
 
-    String getPASSWORD() {
+    public String getPASSWORD() {
         return PASSWORD;
     }
 
-    String getUSERNAME() {
+    public String getUSERNAME() {
         return USERNAME;
     }
 
@@ -112,5 +118,9 @@ class Settings {
 
     public int getITEMS_COUNT_DEFAULT() {
         return ITEMS_COUNT_DEFAULT;
+    }
+
+    public String getLOG_PATH() {
+        return LOG_PATH;
     }
 }

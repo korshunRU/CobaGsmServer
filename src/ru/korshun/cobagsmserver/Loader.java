@@ -5,11 +5,13 @@ public class Loader {
 
     private Settings                    settings;
     private Sql                         sql;
+    private Logger                      logger;
 
     public Loader() {
 
         this.settings =                                     new Settings();
         this.sql =                                          new Sql();
+        this.logger =                                       new Logger();
 
     }
 
@@ -19,5 +21,9 @@ public class Loader {
 
     public Sql getSqlInstance() {
         return sql;
+    }
+
+    public Logger getLoggerInstance() {
+        return logger;
     }
 }

@@ -1,5 +1,6 @@
 package ru.korshun.cobagsmserver;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,16 +11,22 @@ public class DeviceConnectThread
         extends ConnectThread
         implements Runnable {
 
+    private Logger                      logger =            Main.getLoader().getLoggerInstance();
+
     private DatagramPacket              receivePacket;
 
     private String                      outputStr =         "";
+    private String                      deviceIp;
 
 
     public DeviceConnectThread(DatagramPacket receivePacket) {
         this.receivePacket =                                receivePacket;
-        if(!this.receivePacket.getAddress().toString().contains("127.0.0.1")) {
+        String ip =                                         this.receivePacket.getAddress().toString();
+
+        if(!ip.contains("127.0.0.1")) {
+            deviceIp =                                      ip.substring(ip.indexOf("/") + 1, ip.indexOf(" "));
             outputStr +=                                    getCurrentDateAndTime() + ": UDP Клиент подключился: " +
-                                                                this.receivePacket.getAddress() + " ";
+                                                                deviceIp + " ";
         }
 
     }
@@ -35,6 +42,12 @@ public class DeviceConnectThread
 
         if(inStr.startsWith("7") && inStr.contains("=") && inStr.contains("/")) {
             data =                                          parseStrForPush(inStr);
+
+            try {
+                logger.writeToLog(deviceIp, data[1]);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
             if (addEventToMySql(data[0], data[1])) {
                 dataForPush =                               getDataForPush(data[0], data[1]);
