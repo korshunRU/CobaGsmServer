@@ -41,6 +41,13 @@ public class Logger {
 
 
 
+    /**
+     *  Функция проверяет есть ли в файле ip адрес, с которого вылез блок
+     * @param ip                - ip адрес
+     * @param file              - ссылка на файл
+     * @return                  - если ip есть в файле возвращается true
+     * @throws IOException
+     */
     private boolean existIpInFile(String ip, File file) throws IOException {
 
         BufferedReader br =                                 new BufferedReader(new FileReader(file));
@@ -58,6 +65,12 @@ public class Logger {
 
 
 
+    /**
+     *  Функция проверяет есть ли в файле ip адрес, с которого вылез блок, и если его там нет, записывае его в конец файла
+     * @param ip                - ip адрес
+     * @param code              - радиоканал, нужен для создания папки с таким именем
+     * @throws IOException
+     */
     public void writeToLog(String ip, String code) throws IOException {
 
         if(ready) {
