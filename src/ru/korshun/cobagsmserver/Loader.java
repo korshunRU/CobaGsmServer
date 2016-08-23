@@ -11,7 +11,7 @@ public class Loader {
 
         this.settings =                                     new Settings();
         this.sql =                                          new Sql();
-        this.logger =                                       new Logger();
+        this.logger =                                       new Logger(this.settings);
 
     }
 

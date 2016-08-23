@@ -2,9 +2,6 @@ package ru.korshun.cobagsmserver;
 
 
 import java.io.*;
-import java.nio.file.Files;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 
 public class Logger {
 
@@ -16,9 +13,9 @@ public class Logger {
     /**
      *  В конструкторе проверяем, создана ли папка для логов, если нет - создаем, если не получается - блокируем логгинг
      */
-    public Logger() {
+    public Logger(Settings settings) {
 
-        File                            logDir =            new File(Main.getLoader().getSettingsInstance().getLOG_PATH());
+        File logDir =                                       new File(settings.getLOG_PATH());
 
         if(!checkLogPath(logDir) && !logDir.mkdir()) {
             System.out.println("Ошибка создания LOG директории");
