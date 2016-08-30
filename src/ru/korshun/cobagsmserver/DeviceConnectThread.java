@@ -122,7 +122,7 @@ public class DeviceConnectThread
 
         }  catch (SQLException e) {
             if(!e.getMessage().contains("FOREIGN KEY (`event_id`) REFERENCES `coba_events_codes`")) {
-                System.out.println("ERROR!!!! " + e.getMessage());
+                System.out.println(outputStr + ": ERROR!!!! " + e.getMessage());
             }
 //            e.printStackTrace();
             return false;
