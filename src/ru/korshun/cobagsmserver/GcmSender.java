@@ -82,6 +82,10 @@ class GcmSender {
             InputStream inputStream = conn.getInputStream();
             String resp = IOUtils.toString(inputStream);
             System.out.println(resp);
+
+            JSONObject response = new JSONObject(resp);
+
+//            System.out.println(response.get("success"));
 //            System.out.println("Check your device/emulator for notification or logcat for " +
 //                    "confirmation of the receipt of the GCM message.");
         } catch (IOException e) {
