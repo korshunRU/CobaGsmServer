@@ -122,7 +122,7 @@ public class DeviceConnectThread
 
         }  catch (SQLException e) {
             if(!e.getMessage().contains("FOREIGN KEY (`event_id`) REFERENCES `coba_events_codes`")) {
-                System.out.println(outputStr + ": Error inserting data ");
+                System.out.println(getCurrentDateAndTime() + ": Error inserting data ");
             }
 //            e.printStackTrace();
             return false;
