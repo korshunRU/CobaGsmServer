@@ -91,7 +91,7 @@ public class ClientConnectThread
 
 
                     case "sendToken":
-                        updateToken(data.getString("token"), data.getInt("userId"), out);
+                        updateToken(data.getString("token"), data.getInt("userId"), data.getString("mac"), out);
                         break;
 
 
@@ -478,10 +478,18 @@ public class ClientConnectThread
         String pass =                                       data.getString("pass");
         String token =                                      data.getString("token");
 
+        if(!data.has("mac")) {
+            sendOperationStatusToClient(out, STATUS_ERROR, "Обновите приложение");
+            return;
+        }
+
         if(connection == null) {
             sendOperationStatusToClient(out, STATUS_ERROR, "Сервер БД недоступен");
             return;
         }
+
+        String mac =                                        data.getString("mac");
+
 
         String query = "SELECT COUNT(*) AS `size`, " +
                             tablePrefix + "users.id AS `id`, " +
@@ -512,7 +520,7 @@ public class ClientConnectThread
                     userIdData.put("userName",              decodeStr(userName).trim());
 
                     sendOperationStatusToClient(out, STATUS_COMPLITE, userIdData);
-                    updateToken(token, userId);
+                    updateToken(token, userId, mac);
                     addEnterDateTime(userId);
                     System.out.println(getCurrentDateAndTime() + ": Авторизация успешна");
                 }
@@ -613,10 +621,11 @@ public class ClientConnectThread
      *  Обновление gcm ключа клиента
      * @param token                 - ключ
      * @param userId                - id пользователя
+     * @param mac                   mac- mac телефона пользователя
      * @throws IOException
      */
-    private void updateToken(String token, int userId) throws IOException {
-        updateToken(token, userId, null);
+    private void updateToken(String token, int userId, String mac) throws IOException {
+        updateToken(token, userId, mac, null);
     }
 
 
@@ -624,10 +633,11 @@ public class ClientConnectThread
      *  Обновление gcm ключа клиента
      * @param token                 - ключ
      * @param userId                - id пользователя
+     * @param mac                   - mac телефона пользователя
      * @param out                   - ссылка на DataOutputStream
      * @throws IOException
      */
-    private void updateToken(String token, int userId, DataOutputStream out) throws IOException {
+    private void updateToken(String token, int userId, String mac, DataOutputStream out) throws IOException {
 
         Connection connection =                             createConnect();
         PreparedStatement ps;
@@ -636,16 +646,28 @@ public class ClientConnectThread
             return;
         }
 
-        String query = "UPDATE " + tablePrefix + "users " +
-                        "SET " + tablePrefix + "users.gcm_hash = ? " +
-                        "WHERE " + tablePrefix + "users.id = ?;";
+//        String query = "UPDATE " + tablePrefix + "users " +
+//                        "SET " + tablePrefix + "users.gcm_hash = ? " +
+//                        "WHERE " + tablePrefix + "users.id = ?;";
+
+        String query = "INSERT INTO " + tablePrefix + "users_gcm_hash " +
+                        "SET " + tablePrefix + "users_gcm_hash.id_client = ?, " +
+                                tablePrefix + "users_gcm_hash.gcm_hash = ?, " +
+                                tablePrefix + "users_gcm_hash.phone_mac = ? " +
+                        "ON DUPLICATE KEY UPDATE " +
+                                tablePrefix + "users_gcm_hash.gcm_hash = ?;";
 
         try {
             ps =                                            connection.prepareStatement(query);
 
-            ps.setString(1, token);
-            ps.setInt(2, userId);
+            ps.setInt(1, userId);
+            ps.setString(2, token);
+            ps.setString(3, mac);
+            ps.setString(4, token);
+//            ps.setString(5, mac);
+//            ps.setInt(6, userId);
 
+//            System.out.println(ps.toString());
             ps.executeUpdate();
 
             if(out != null) {

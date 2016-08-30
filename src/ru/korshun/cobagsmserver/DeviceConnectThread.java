@@ -6,6 +6,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 public class DeviceConnectThread
         extends ConnectThread
@@ -36,7 +38,8 @@ public class DeviceConnectThread
     public void run() {
 
         String inStr =                                      new String(receivePacket.getData());
-        String[] data, dataForPush;
+        String[] data;
+        ArrayList<String[]> hashList;
 
         outputStr +=                                        inStr;
         System.out.println(outputStr);
@@ -51,8 +54,22 @@ public class DeviceConnectThread
             }
 
             if (addEventToMySql(data[0], data[1])) {
-                dataForPush =                               getDataForPush(data[0], data[1]);
-                new GcmSender().send(dataForPush[0], dataForPush[1]);
+                hashList =                                  getDataForPush(data[0], data[1]);
+
+                hashList
+                        .stream()
+                        .filter(dataForPush -> dataForPush[1] != null)
+                        .forEach(dataForPush -> {
+
+                    new GcmSender().send(dataForPush[0], dataForPush[1]);
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                });
+
             }
         }
         else {
@@ -131,23 +148,24 @@ public class DeviceConnectThread
      * @param code                  - hex номер радиоканала объекта
      * @return                      - возвращается массив { строкадляотправки, токен}
      */
-    private String[] getDataForPush(String event, String code) {
+    private ArrayList<String[]> getDataForPush(String event, String code) {
 
         Connection connection =                             createConnect();
         PreparedStatement ps;
         ResultSet rs;
 
-        String[] returnArray =                              new String[2];
+//        String[] returnArray =                              new String[2];
+        ArrayList<String[]> returnArray =                   new ArrayList<>();
 
         String query = "SELECT " + tablePrefix + "events_codes.desc AS `desc`, " +
                                     tablePrefix + "numbers_hex.number AS `number`, " +
                                     tablePrefix + "objects.address AS `address`, " +
-                                    tablePrefix + "users.gcm_hash AS `token` " +
+                                    tablePrefix + "users_gcm_hash.gcm_hash AS `token` " +
                         "FROM " + tablePrefix + "events_codes " +
                         "LEFT JOIN " + tablePrefix + "numbers_hex ON " + tablePrefix + "numbers_hex.r_code = ? " +
                         "LEFT JOIN " + tablePrefix + "objects ON " + tablePrefix + "objects.number = " +
                                                                         tablePrefix + "numbers_hex.number " +
-                        "LEFT JOIN " + tablePrefix + "users ON " + tablePrefix + "users.id = " +
+                        "LEFT JOIN " + tablePrefix + "users_gcm_hash ON " + tablePrefix + "users_gcm_hash.id_client = " +
                                                 "(SELECT " + tablePrefix + "objects.id_client " +
                                                 "FROM " + tablePrefix + "objects " +
                                                 "WHERE " + tablePrefix + "objects.number = " +
@@ -160,19 +178,25 @@ public class DeviceConnectThread
             ps.setString(1, code);
             ps.setString(2, event);
 
+//            System.out.println(ps.toString());
+
             rs =                                            ps.executeQuery();
 
-            if(rs.first()) {
+            while (rs.next()) {
+
+                String[] data =                             new String[2];
 
                 String address =                            rs.getString("address") != null ?
                                                                 decodeStr(rs.getString("address")).trim() :
                                                                 "-";
 
-                returnArray[0] =                            getCurrentDateAndTime() + " (" +
-                                                            rs.getString("number") + ", " +
-                                                            address + ") " +
-                                                            rs.getString("desc");
-                returnArray[1] =                            rs.getString("token");
+                data[0] =                                   getCurrentDateAndTime() + " (" +
+                                                                rs.getString("number") + ", " +
+                                                                address + ") " +
+                                                                rs.getString("desc");
+                data[1] =                                   rs.getString("token");
+
+                returnArray.add(data);
 
             }
 
@@ -186,7 +210,7 @@ public class DeviceConnectThread
             }
         }
 
-        System.out.println(returnArray[0]);
+//        System.out.println(returnArray[0]);
 
         return returnArray;
     }
