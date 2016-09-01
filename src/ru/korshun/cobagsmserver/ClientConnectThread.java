@@ -23,6 +23,8 @@ public class ClientConnectThread
 
     private String                      outputStr =         "";
 
+    private final int                   VERSION =           1;
+
     ClientConnectThread(Socket socket) {
         this.socket =                                       socket;
 
@@ -64,6 +66,13 @@ public class ClientConnectThread
                 String type =                               query.getString("type");
 
                 if(type.equals("exit")) {
+                    break;
+                }
+
+                if(!query.has("version") || query.getInt("version") < VERSION) {
+                    outputStr +=                            ": version error!";
+                    sendOperationStatusToClient(out, STATUS_ERROR, "Обновите приложение");
+                    System.out.println(outputStr);
                     break;
                 }
 

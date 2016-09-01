@@ -20,10 +20,13 @@ public class DeviceConnectThread
     private String                      outputStr =         "";
     private String                      deviceIp;
 
+    private GcmSender                   gcmSender;
+
 
     public DeviceConnectThread(DatagramPacket receivePacket) {
         this.receivePacket =                                receivePacket;
         String ip =                                         this.receivePacket.getAddress().toString();
+        gcmSender =                                         new GcmSender();
 
         if(!ip.contains("127.0.0.1")) {
 //            System.out.println(this.receivePacket.getAddress().toString());
@@ -61,7 +64,7 @@ public class DeviceConnectThread
                         .filter(dataForPush -> dataForPush[1] != null)
                         .forEach(dataForPush -> {
 
-                    new GcmSender().send(dataForPush[0], dataForPush[1]);
+                    gcmSender.send(dataForPush[0], dataForPush[2], dataForPush[1]);
                     try {
                         TimeUnit.MILLISECONDS.sleep(500);
                     } catch (InterruptedException e) {
@@ -184,7 +187,7 @@ public class DeviceConnectThread
 
             while (rs.next()) {
 
-                String[] data =                             new String[2];
+                String[] data =                             new String[3];
 
                 String address =                            rs.getString("address") != null ?
                                                                 decodeStr(rs.getString("address")).trim() :
@@ -195,6 +198,7 @@ public class DeviceConnectThread
                                                                 address + ") " +
                                                                 rs.getString("desc");
                 data[1] =                                   rs.getString("token");
+                data[2] =                                   rs.getString("desc");
 
                 returnArray.add(data);
 
