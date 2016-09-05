@@ -664,7 +664,8 @@ public class ClientConnectThread
                                 tablePrefix + "users_gcm_hash.gcm_hash = ?, " +
                                 tablePrefix + "users_gcm_hash.phone_mac = ? " +
                         "ON DUPLICATE KEY UPDATE " +
-                                tablePrefix + "users_gcm_hash.gcm_hash = ?;";
+                                tablePrefix + "users_gcm_hash.gcm_hash = ?," +
+                                tablePrefix + "users_gcm_hash.phone_mac = ?;";
 
         try {
             ps =                                            connection.prepareStatement(query);
@@ -673,6 +674,7 @@ public class ClientConnectThread
             ps.setString(2, token);
             ps.setString(3, mac);
             ps.setString(4, token);
+            ps.setString(5, mac);
 //            ps.setString(5, mac);
 //            ps.setInt(6, userId);
 
