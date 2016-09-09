@@ -87,6 +87,11 @@ public class DeviceConnectThread
     }
 
 
+    /**
+     *  Функция записывает в БД номер телефона блока
+     * @param code                  - радиоканал объекта
+     * @param phone                 - телефонный номер
+     */
     private void addPhoneToMySql(String code, String phone) {
 
         Connection connection =                             createConnect();
