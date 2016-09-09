@@ -63,7 +63,8 @@ public abstract class ConnectThread {
 
         return new String[]{
                 inStr.substring(inStr.indexOf("/") + 1, inStr.indexOf(" ")),
-                inStr.substring(inStr.indexOf("=") + 1, inStr.indexOf("/"))
+                inStr.substring(inStr.indexOf("=") + 1, inStr.indexOf("/")),
+                inStr.substring(0, 11)
         };
 
     }

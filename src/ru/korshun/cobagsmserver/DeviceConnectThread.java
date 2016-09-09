@@ -56,7 +56,10 @@ public class DeviceConnectThread
                 e.printStackTrace();
             }
 
+            addPhoneToMySql(data[1], data[2]);
+
             if (addEventToMySql(data[0], data[1])) {
+
                 hashList =                                  getDataForPush(data[0], data[1]);
 
                 hashList
@@ -84,6 +87,59 @@ public class DeviceConnectThread
     }
 
 
+    private void addPhoneToMySql(String code, String phone) {
+
+        Connection connection =                             createConnect();
+        PreparedStatement ps;
+
+        String query =  "INSERT INTO " + tablePrefix + "objects_phones " +
+                        "SET  " + tablePrefix + "objects_phones.id_client = (SELECT id_client " +
+                                                                            "FROM  " + tablePrefix + "objects " +
+                                                                            "WHERE number = (SELECT number " +
+                                                                                            "FROM  " + tablePrefix + "numbers_hex " +
+                                                                                            "WHERE r_code = ?)), " +
+                                tablePrefix + "objects_phones.id_object =   (SELECT id " +
+                                                                            "FROM  " + tablePrefix + "objects " +
+                                                                            "WHERE number = (SELECT number " +
+                                                                                            "FROM  " + tablePrefix + "numbers_hex " +
+                                                                                            "WHERE r_code = ?)), " +
+                                tablePrefix + "objects_phones.object_phone = ? " +
+                        "ON DUPLICATE KEY UPDATE " +
+                                tablePrefix + "objects_phones.id_client = (SELECT id_client " +
+                                                                            "FROM  " + tablePrefix + "objects " +
+                                                                            "WHERE number = (SELECT number " +
+                                                                                            "FROM  " + tablePrefix + "numbers_hex " +
+                                                                                            "WHERE r_code = ?)), " +
+                                tablePrefix + "objects_phones.id_object = (SELECT id " +
+                                                                            "FROM  " + tablePrefix + "objects " +
+                                                                            "WHERE number = (SELECT number " +
+                                                                                            "FROM  " + tablePrefix + "numbers_hex " +
+                                                                                            "WHERE r_code = ?)), " +
+                                tablePrefix + "objects_phones.object_phone = ?";
+
+        try {
+            ps =                                            connection.prepareStatement(query);
+
+            ps.setString(1, code);
+            ps.setString(2, code);
+            ps.setString(3, phone);
+            ps.setString(4, code);
+            ps.setString(5, code);
+            ps.setString(6, phone);
+
+            ps.executeUpdate();
+
+        }  catch (SQLException e) {
+//            System.out.println(getCurrentDateAndTime() + ": " + e.getMessage());
+        } finally {
+            try {
+                Main.getLoader().getSqlInstance().disconnectionFromSql(connection);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
 
 
     /**
@@ -96,22 +152,22 @@ public class DeviceConnectThread
         PreparedStatement ps;
 
         String query =  "INSERT INTO " +  tablePrefix + "events_gsm " +
-                        "SET " +  tablePrefix + "events_gsm.time = ?, " +
-                                tablePrefix + "events_gsm.object_id = " +
-                                        "IFNULL((SELECT " +  tablePrefix + "objects.id " +
-                                        "FROM " +  tablePrefix + "objects " +
-                                        "WHERE " +  tablePrefix + "objects.number = " +
-                                                "(SELECT " +  tablePrefix + "numbers_hex.number " +
-                                                        "FROM " +  tablePrefix + "numbers_hex " +
-                                                        "WHERE " +  tablePrefix + "numbers_hex.r_code = ?)), 0), " +
-                                tablePrefix + "events_gsm.code_id = " +
-                                        "IFNULL((SELECT " +  tablePrefix + "numbers_hex.id " +
-                                                "FROM " +  tablePrefix + "numbers_hex " +
-                                                "WHERE " +  tablePrefix + "numbers_hex.r_code = ?), 0), " +
-                                tablePrefix + "events_gsm.event_id = " +
-                                        "IFNULL((SELECT " +  tablePrefix + "events_codes.id " +
-                                                "FROM " +  tablePrefix + "events_codes " +
-                                                "WHERE " +  tablePrefix + "events_codes.code = ?), 0);";
+                        "SET " +    tablePrefix + "events_gsm.time = ?, " +
+                                    tablePrefix + "events_gsm.object_id = " +
+                                                            "IFNULL((SELECT " +  tablePrefix + "objects.id " +
+                                                                    "FROM " +  tablePrefix + "objects " +
+                                                                    "WHERE " +  tablePrefix + "objects.number = " +
+                                                                        "(SELECT " +  tablePrefix + "numbers_hex.number " +
+                                                                        "FROM " +  tablePrefix + "numbers_hex " +
+                                                                        "WHERE " +  tablePrefix + "numbers_hex.r_code = ?)), 0), " +
+                                    tablePrefix + "events_gsm.code_id = " +
+                                                            "IFNULL((SELECT " +  tablePrefix + "numbers_hex.id " +
+                                                                    "FROM " +  tablePrefix + "numbers_hex " +
+                                                                    "WHERE " +  tablePrefix + "numbers_hex.r_code = ?), 0), " +
+                                    tablePrefix + "events_gsm.event_id = " +
+                                                            "IFNULL((SELECT " +  tablePrefix + "events_codes.id " +
+                                                                    "FROM " +  tablePrefix + "events_codes " +
+                                                                    "WHERE " +  tablePrefix + "events_codes.code = ?), 0);";
 
         try {
             ps =                                            connection.prepareStatement(query);
@@ -124,9 +180,9 @@ public class DeviceConnectThread
             ps.executeUpdate();
 
         }  catch (SQLException e) {
-            if(!e.getMessage().contains("FOREIGN KEY (`event_id`) REFERENCES `coba_events_codes`")) {
-                System.out.println(getCurrentDateAndTime() + ": Error inserting data ");
-            }
+//            if(!e.getMessage().contains("FOREIGN KEY (`event_id`) REFERENCES `coba_events_codes`")) {
+//                System.out.println(getCurrentDateAndTime() + ": Error inserting data ");
+//            }
 //            e.printStackTrace();
             return false;
         } finally {

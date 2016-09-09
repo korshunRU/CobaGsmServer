@@ -35,7 +35,7 @@ class GcmSender {
 
 
 
-    public void send(String msg, String event, String token) {
+    public int send(String msg, String event, String token) {
 
 //        System.out.println(str + " " + token)
 
@@ -54,7 +54,7 @@ class GcmSender {
             jNotification.put("sound",                      NOTIFICATION_SOUND);
 
             jGcmData.put("data",                            jData);
-            jGcmData.put("notification",                    jNotification);
+//            jGcmData.put("notification",                    jNotification);
             jGcmData.put("to",                              token.trim());
             jGcmData.put("priority",                        PRIORITY_HIGH);
             jGcmData.put("time_to_live",                    60 * 60 * TIME_TO_LIVE);
@@ -80,10 +80,12 @@ class GcmSender {
 
             JSONObject response =                           new JSONObject(resp);
 
+            return (int)response.get("success");
 //            System.out.println(response.get("success"));
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("ERROR!!!! " + e.getMessage());
+            return 0;
         }
     }
 

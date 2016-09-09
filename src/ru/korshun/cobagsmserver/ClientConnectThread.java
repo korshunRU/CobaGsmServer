@@ -23,7 +23,7 @@ public class ClientConnectThread
 
     private String                      outputStr =         "";
 
-    private final int                   VERSION =           1;
+    private final int                   VERSION =           2;
 
     ClientConnectThread(Socket socket) {
         this.socket =                                       socket;
@@ -239,11 +239,18 @@ public class ClientConnectThread
         String query = "SELECT  DATE_FORMAT(" +  tablePrefix + "events_gsm.time, '%d.%m.%Y') AS `date`, " +
                                 "DATE_FORMAT(" + tablePrefix + "events_gsm.time, '%H:%i:%S') AS `time`, " +
                                 tablePrefix + "events_codes.desc AS `event`, " +
+                                tablePrefix + "objects_phones.object_phone AS `phone`, " +
                                 "IF(coba_events_codes.desc LIKE '%Постановка%', '1', " +
                                 "IF(coba_events_codes.desc LIKE '%Снятие%', '2', '0')) as status " +
                         "FROM " + tablePrefix + "events_gsm " +
                         "LEFT JOIN " + tablePrefix + "events_codes " +
                             "ON " + tablePrefix + "events_codes.id = " + tablePrefix + "events_gsm.event_id " +
+                        "LEFT JOIN " + tablePrefix + "objects_phones " +
+                            "ON " + tablePrefix + "objects_phones.id_object = (SELECT " + tablePrefix + "objects.id " +
+                                                                                "FROM " + tablePrefix + "objects " +
+                                                                                "WHERE " + tablePrefix + "objects.number = ? " +
+                                                                                "AND " + tablePrefix + "objects.id_client = ?) " +
+                                                                                "AND " + tablePrefix + "objects_phones.id_client = ? " +
                         "WHERE " + tablePrefix + "events_gsm.object_id = " +
                             "(SELECT " + tablePrefix + "objects.id " +
                             "FROM " + tablePrefix + "objects " +
@@ -257,8 +264,13 @@ public class ClientConnectThread
 
             ps.setInt(1, objectNumber);
             ps.setInt(2, userId);
-            ps.setInt(3, listCount);
-            ps.setInt(4, listCount + step);
+            ps.setInt(3, userId);
+            ps.setInt(4, objectNumber);
+            ps.setInt(5, userId);
+            ps.setInt(6, listCount);
+            ps.setInt(7, listCount + step);
+
+//            System.out.println(ps.toString());
 
             rs =                                            ps.executeQuery();
 
@@ -267,6 +279,7 @@ public class ClientConnectThread
                 String date =                               rs.getString("date");
                 String time =                               rs.getString("time");
                 String event =                              rs.getString("event");
+                String phone =                              rs.getString("phone");
 
                 if(date == null || time == null || event == null) {
                     continue;
@@ -278,6 +291,7 @@ public class ClientConnectThread
                 signal.put("date", date);
                 signal.put("time", time);
                 signal.put("event", event);
+                signal.put("phone", phone);
 
                 array.put(signal);
 
@@ -341,32 +355,38 @@ public class ClientConnectThread
         String query = "SELECT " +  tablePrefix + "objects.number AS `number`, " +
                                     tablePrefix + "objects.name AS `type`, " +
                                     tablePrefix + "objects.address AS `address`, " +
+                                    tablePrefix + "objects_phones.object_phone AS `phone`, " +
                                     "IF(coba_events_codes.desc LIKE '%Постановка%', '1', " +
                                         "IF(coba_events_codes.desc LIKE '%Снятие%', '2', '0')) as status " +
-                        "FROM " + tablePrefix + "objects " +
+                        "FROM " + tablePrefix + "objects_phones " +
                         "LEFT JOIN coba_events_codes ON coba_events_codes.id = " +
                                 "(SELECT coba_events_gsm.event_id " +
                                 "FROM coba_events_gsm " +
                                 "WHERE coba_events_gsm.object_id = coba_objects.id " +
                                 "AND coba_events_gsm.event_id BETWEEN ? AND ? " +
                                 "ORDER BY coba_events_gsm.time DESC " +
-                                "LIMIT 0,1)" +
-
-                "WHERE " + tablePrefix + "objects.id_client = ?;";
+                                "LIMIT 0,1) " +
+                        "LEFT JOIN coba_objects ON coba_objects.id = coba_objects_phones.id_object " +
+                        "WHERE " + tablePrefix + "objects.id_client = ?;";
 
 //        SELECT
-//        coba_objects.number AS number,
-//                coba_objects.name AS name,
-//        coba_objects.address AS address,
-//                IF(coba_events_codes.desc LIKE '%Постановка%', '1', IF(coba_events_codes.desc LIKE '%Снятие%', '2', '0')) as status
-//        FROM coba_objects
-//        LEFT JOIN coba_events_codes ON coba_events_codes.id = (SELECT coba_events_gsm.event_id
+//        coba_objects.number AS `number`,
+//        coba_objects.name AS `type`,
+//        coba_objects.address AS `address`,
+//        coba_objects_phones.object_phone AS `phone`,
+//        IF(coba_events_codes.desc LIKE '%Постановка%', '1', IF(coba_events_codes.desc LIKE '%Снятие%', '2', '0')) as status
+//        FROM coba_objects_phones
+//        LEFT JOIN coba_events_codes ON coba_events_codes.id = (SELECT
+//        coba_events_gsm.event_id
 //        FROM coba_events_gsm
 //        WHERE coba_events_gsm.object_id = coba_objects.id
-//        AND coba_events_gsm.event_id BETWEEN 1 AND 32
-//        ORDER BY coba_events_gsm.time DESC
-//        LIMIT 0,1)
-//        WHERE coba_objects.id_client = 19
+//        AND coba_events_gsm.event_id BETWEEN 1 AND 35
+//        ORDER BY coba_events_gsm.time
+//        DESC LIMIT 0,1)
+//        LEFT JOIN coba_objects ON coba_objects.id = coba_objects_phones.id_object
+//        WHERE coba_objects.id_client = 19;
+
+
 
         try {
             ps =                                            connection.prepareStatement(query);
@@ -655,10 +675,6 @@ public class ClientConnectThread
             return;
         }
 
-//        String query = "UPDATE " + tablePrefix + "users " +
-//                        "SET " + tablePrefix + "users.gcm_hash = ? " +
-//                        "WHERE " + tablePrefix + "users.id = ?;";
-
         String query = "INSERT INTO " + tablePrefix + "users_gcm_hash " +
                         "SET " + tablePrefix + "users_gcm_hash.id_client = ?, " +
                                 tablePrefix + "users_gcm_hash.gcm_hash = ?, " +
@@ -675,8 +691,6 @@ public class ClientConnectThread
             ps.setString(3, mac);
             ps.setString(4, token);
             ps.setString(5, mac);
-//            ps.setString(5, mac);
-//            ps.setInt(6, userId);
 
 //            System.out.println(ps.toString());
             ps.executeUpdate();
