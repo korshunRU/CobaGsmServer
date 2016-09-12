@@ -35,7 +35,7 @@ class GcmSender {
 
 
 
-    public int send(String msg, String event, String token) {
+    public int send(String msg, String event, String token, String objectNumber) {
 
 //        System.out.println(str + " " + token)
 
@@ -47,6 +47,7 @@ class GcmSender {
 
             jData.put("message",                            msg.trim());
             jData.put("title",                              event.trim());
+            jData.put("object_number",                      objectNumber.trim());
 
             jNotification.put("body",                       msg.trim());
             jNotification.put("title",                      event.trim());

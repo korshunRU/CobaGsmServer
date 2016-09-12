@@ -67,7 +67,7 @@ public class DeviceConnectThread
                         .filter(dataForPush -> dataForPush[1] != null)
                         .forEach(dataForPush -> {
 
-                    gcmSender.send(dataForPush[0], dataForPush[2], dataForPush[1]);
+                    gcmSender.send(dataForPush[0], dataForPush[2], dataForPush[1], dataForPush[3]);
                     try {
                         TimeUnit.MILLISECONDS.sleep(500);
                     } catch (InterruptedException e) {
@@ -260,6 +260,7 @@ public class DeviceConnectThread
                                                                 rs.getString("desc");
                 data[1] =                                   rs.getString("token");
                 data[2] =                                   rs.getString("desc");
+                data[3] =                                   rs.getString("number");
 
                 returnArray.add(data);
 

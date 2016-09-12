@@ -23,7 +23,7 @@ public class ClientConnectThread
 
     private String                      outputStr =         "";
 
-    private final int                   VERSION =           2;
+    private final int                   VERSION =           3;
 
     ClientConnectThread(Socket socket) {
         this.socket =                                       socket;
