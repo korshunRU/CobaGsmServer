@@ -248,7 +248,7 @@ public class DeviceConnectThread
 
             while (rs.next()) {
 
-                String[] data =                             new String[3];
+                String[] data =                             new String[4];
 
                 String address =                            rs.getString("address") != null ?
                                                                 decodeStr(rs.getString("address")).trim() :
