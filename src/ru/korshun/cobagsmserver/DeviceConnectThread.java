@@ -45,9 +45,10 @@ public class DeviceConnectThread
         ArrayList<String[]> hashList;
 
         outputStr +=                                        inStr;
-        System.out.println(outputStr);
 
         if(inStr.startsWith("7") && inStr.contains("=") && inStr.contains("/")) {
+
+            System.out.println(outputStr);
             data =                                          parseStrForPush(inStr);
 
             try {
@@ -67,7 +68,7 @@ public class DeviceConnectThread
                         .filter(dataForPush -> dataForPush[1] != null)
                         .forEach(dataForPush -> {
 
-                    gcmSender.send(dataForPush[0], dataForPush[2], dataForPush[1], dataForPush[3]);
+                    gcmSender.send(dataForPush[0], dataForPush[2], dataForPush[1], dataForPush[3], data);
                     try {
                         TimeUnit.MILLISECONDS.sleep(500);
                     } catch (InterruptedException e) {
@@ -79,12 +80,14 @@ public class DeviceConnectThread
             }
         }
 
-        else if(inStr.startsWith("RECEIVED")) {
-            outputStr +=                                    ": " + inStr + " ";
+        else if(inStr.startsWith("RECEIVED:")) {
+            System.out.println(outputStr);
+//            outputStr =                                    ": " + inStr + " ";
         }
 
         else {
             outputStr +=                                    ": UNKNOWN QUERY: " + inStr + " ";
+            System.out.println(outputStr);
         }
 
 

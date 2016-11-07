@@ -90,10 +90,11 @@ public class ConnectListener
 
 //            serverSocket =                                  new DatagramSocket(Main.getLoader().getSettingsInstance()
 //                                                                                    .getUDP_PORT());
-            byte[] receiveData =                            new byte[32];
+
 
             while(true) {
 //
+                byte[] receiveData =                        new byte[32];
                 DatagramPacket receivePacket =              new DatagramPacket(receiveData, receiveData.length);
                 serverSocket.receive(receivePacket);
 //

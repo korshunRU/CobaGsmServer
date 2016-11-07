@@ -35,7 +35,7 @@ class GcmSender {
 
 
 
-    public int send(String msg, String event, String token, String objectNumber) {
+    public int send(String msg, String event, String token, String objectNumber, String[] data) {
 
 //        System.out.println(str + " " + token)
 
@@ -48,6 +48,8 @@ class GcmSender {
             jData.put("message",                            msg.trim());
             jData.put("title",                              event.trim());
             jData.put("object_number",                      objectNumber.trim());
+            jData.put("event",                              data[0].trim());
+            jData.put("channel",                            data[1].trim());
 
             jNotification.put("body",                       msg.trim());
             jNotification.put("title",                      event.trim());
