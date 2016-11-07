@@ -78,6 +78,11 @@ public class DeviceConnectThread
 
             }
         }
+
+        else if(inStr.startsWith("RECEIVED")) {
+            outputStr +=                                    ": " + inStr + " ";
+        }
+
         else {
             outputStr +=                                    ": UNKNOWN QUERY: " + inStr + " ";
         }
