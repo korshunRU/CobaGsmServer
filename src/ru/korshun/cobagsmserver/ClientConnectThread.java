@@ -186,7 +186,8 @@ public class ClientConnectThread
             }
 
         } catch (IOException | JSONException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
+            System.out.println(getCurrentDateAndTime() + ": " + e.getMessage());
         } finally {
             if(!this.socket.getInetAddress().toString().contains("127.0.0.1")) {
                 System.out.println(getCurrentDateAndTime() + ": Клиент отключился: " + this.socket);
