@@ -23,7 +23,7 @@ public class ClientConnectThread
 
     private String                      outputStr =         "";
 
-    private final int                   VERSION =           4;
+    private final int                   VERSION =           5;
 
     ClientConnectThread(Socket socket) {
         this.socket =                                       socket;
@@ -240,7 +240,6 @@ public class ClientConnectThread
         String query = "SELECT  DATE_FORMAT(" +  tablePrefix + "events_gsm.time, '%d.%m.%Y') AS `date`, " +
                                 "DATE_FORMAT(" + tablePrefix + "events_gsm.time, '%H:%i:%S') AS `time`, " +
                                 tablePrefix + "events_codes.desc AS `event`, " +
-                                tablePrefix + "objects_phones.object_phone AS `phone`, " +
                                 "IF(coba_events_codes.desc LIKE '%Постановка%', '1', " +
                                 "IF(coba_events_codes.desc LIKE '%Снятие%', '2', '0')) as status " +
                         "FROM " + tablePrefix + "events_gsm " +
@@ -269,7 +268,7 @@ public class ClientConnectThread
             ps.setInt(4, objectNumber);
             ps.setInt(5, userId);
             ps.setInt(6, listCount);
-            ps.setInt(7, listCount + step);
+            ps.setInt(7, step);
 
 //            System.out.println(ps.toString());
 
@@ -280,7 +279,9 @@ public class ClientConnectThread
                 String date =                               rs.getString("date");
                 String time =                               rs.getString("time");
                 String event =                              rs.getString("event");
-                String phone =                              rs.getString("phone");
+//                String phone =                              rs.getString("phone");
+//                objectName =                                rs.getString("object_name");
+//                objectAddress =                             rs.getString("object_address");
 
                 if(date == null || time == null || event == null) {
                     continue;
@@ -292,13 +293,42 @@ public class ClientConnectThread
                 signal.put("date", date);
                 signal.put("time", time);
                 signal.put("event", event);
-                signal.put("phone", phone);
+//                signal.put("phone", phone);
 
                 array.put(signal);
 
             }
 
+//            signals.put("objectName", decodeStr(objectName).trim());
+//            signals.put("objectAddress", decodeStr(objectAddress).trim());
             signals.put("signals", array);
+
+            query = "SELECT " + tablePrefix + "objects.name AS `object_name`, " +
+                            tablePrefix + "objects.address AS `object_address` " +
+                    "FROM " + tablePrefix + "objects " +
+                    "WHERE " + tablePrefix + "objects.id_client = ? " +
+                        "AND " + tablePrefix + "objects.number = ?;";
+
+            ps =                                            connection.prepareStatement(query);
+
+            ps.setInt(1, userId);
+            ps.setInt(2, objectNumber);
+
+            rs =                                            ps.executeQuery();
+
+            String objectName = "-";
+            String objectAddress = "-";
+
+            if(rs.next()) {
+                objectName =                                rs.getString("object_name");
+                objectAddress =                             rs.getString("object_address");
+            }
+
+            signals.put("objectName", decodeStr(objectName).trim());
+            signals.put("objectAddress", decodeStr(objectAddress).trim());
+
+//            System.out.println(array.length());
+
 //            returnStatus.put("data", signals);
 //            returnStatus.put("status", 1);
 
@@ -326,7 +356,7 @@ public class ClientConnectThread
 
 
     /**
-     *  Функция лезет в БД и получает все объекты пользователя
+     *  Функция лезет в БД и получает все объекты пользователя с общей информацией по клиенту (имя\телефон)
      * @param data              - json c userId клиента
      * @param out               - ссылка на DataOutputStream для отправки сообщения клиенту
      * @throws IOException
@@ -357,6 +387,9 @@ public class ClientConnectThread
                                     tablePrefix + "objects.name AS `type`, " +
                                     tablePrefix + "objects.address AS `address`, " +
                                     tablePrefix + "objects_phones.object_phone AS `phone`, " +
+                                    tablePrefix + "users.name AS `user_name`, " +
+                                    tablePrefix + "users.address AS `user_address`, " +
+                                    tablePrefix + "users.phone AS `user_phone`, " +
                                     "IF(coba_events_codes.desc LIKE '%Постановка%', '1', " +
                                         "IF(coba_events_codes.desc LIKE '%Снятие%', '2', '0')) as status " +
                         "FROM " + tablePrefix + "objects_phones " +
@@ -368,6 +401,7 @@ public class ClientConnectThread
                                 "ORDER BY coba_events_gsm.time DESC " +
                                 "LIMIT 0,1) " +
                         "LEFT JOIN coba_objects ON coba_objects.id = coba_objects_phones.id_object " +
+                        "LEFT JOIN coba_users ON coba_users.id = ? " +
                         "WHERE " + tablePrefix + "objects.id_client = ?;";
 
 //        SELECT
@@ -395,16 +429,24 @@ public class ClientConnectThread
             ps.setInt(1, 1);
             ps.setInt(2, 35);
             ps.setInt(3, userId);
+            ps.setInt(4, userId);
 
 //            System.out.println(ps.toString());
 
             rs =                                            ps.executeQuery();
+
+            String userName = "-";
+            String userAddress = "-";
+            String userPhone = "-";
 
             while (rs.next()) {
 
                 String number =                             rs.getString("number");
                 String type =                               rs.getString("type");
                 String address =                            rs.getString("address");
+                userName =                                  rs.getString("user_name");
+                userAddress =                               rs.getString("user_address");
+                userPhone =                                 rs.getString("user_phone");
 
                 if(number == null) {
                     continue;
@@ -466,7 +508,12 @@ public class ClientConnectThread
 
 //            System.out.println(array.toString());
 
+            objects.put("userName", decodeStr(userName).trim());
+            objects.put("userAddress", decodeStr(userAddress).trim());
+            objects.put("userPhone", decodeStr(userPhone).trim());
             objects.put("objects", array);
+
+
 
 //            returnStatus.put("data", objects);
 //            returnStatus.put("status", 1);
@@ -523,10 +570,15 @@ public class ClientConnectThread
 
         String query = "SELECT COUNT(*) AS `size`, " +
                             tablePrefix + "users.id AS `id`, " +
-                            tablePrefix + "users.name AS `name` " +
-                        "FROM " + tablePrefix + "users " +
-                        "WHERE (" + tablePrefix + "users.login = ? OR " + tablePrefix + "users.login_short = ?)" +
-                                "AND " + tablePrefix + "users.password_mobile = ?;";
+                            tablePrefix + "users.name AS `name`, " +
+                            tablePrefix + "objects.number AS `number` " +
+                        "FROM " + tablePrefix + "objects " +
+                        "LEFT JOIN " + tablePrefix + "users ON " + tablePrefix + "users.id = " + tablePrefix + "objects.id_client " +
+                        "WHERE (" + tablePrefix + "users.login = ? OR " + tablePrefix + "users.login_short = ?) " +
+                                "AND " + tablePrefix + "users.password_mobile = ? " +
+                        "GROUP BY " + tablePrefix + "objects.number;";
+
+
 
         try {
             ps =                                            connection.prepareStatement(query);
@@ -535,31 +587,37 @@ public class ClientConnectThread
             ps.setString(2, login.trim());
             ps.setString(3, pass);
 
+//            System.out.println(ps.toString());
+
             rs =                                            ps.executeQuery();
 
-            if(rs.first()) {
+            int size = 0, userId = 0;
+            String objects = "", userName = "";
+            JSONObject userIdData = new JSONObject();
 
-                int size =                                  rs.getInt("size");
-                int userId =                                rs.getInt("id");
-                String userName =                           rs.getString("name");
+            while(rs.next()) {
 
-                if(size == 1) {
-                    JSONObject userIdData =                 new JSONObject();
+                size =                                      rs.getInt("size");
+                userId =                                    rs.getInt("id");
+                userName =                                  rs.getString("name");
+                objects +=                                  rs.getString("number") + ",";
 
-                    userIdData.put("userId",                userId);
-                    userIdData.put("userName",              decodeStr(userName).trim());
+            }
 
-                    sendOperationStatusToClient(out, STATUS_COMPLITE, userIdData);
-                    updateToken(token, userId, mac);
-                    addEnterDateTime(userId);
-                    System.out.println(getCurrentDateAndTime() + ": Авторизация успешна");
-                }
 
-                else {
-                    sendOperationStatusToClient(out, STATUS_ERROR, "Неверные данные");
-                    System.out.println(getCurrentDateAndTime() + ": Авторизация не удалась");
-                }
+            if(size == 1) {
+                userIdData.put("userId", userId);
+                userIdData.put("userName", decodeStr(userName).trim());
+                userIdData.put("listObjects", objects.substring(0, objects.length() - 1));
 
+                sendOperationStatusToClient(out, STATUS_COMPLITE, userIdData);
+                updateToken(token, userId, mac);
+                addEnterDateTime(userId);
+                System.out.println(getCurrentDateAndTime() + ": Авторизация успешна");
+            }
+            else {
+                sendOperationStatusToClient(out, STATUS_ERROR, "Неверные данные");
+                System.out.println(getCurrentDateAndTime() + ": Авторизация не удалась");
             }
 
         } catch (SQLException e) {
