@@ -42,7 +42,7 @@ public class DeviceConnectThread
 
         String inStr =                                      new String(receivePacket.getData());
         String[] data;
-        ArrayList<String[]> hashList;
+        ArrayList<String[]> dataForPush;
 
         outputStr +=                                        inStr;
 
@@ -61,14 +61,19 @@ public class DeviceConnectThread
 
             if (addEventToMySql(data[0], data[1])) {
 
-                hashList =                                  getDataForPush(data[0], data[1]);
+                dataForPush =                                  getDataForPush(data[0], data[1]);
 
-                hashList
+                if(dataForPush == null) {
+                    System.out.println(getCurrentDateAndTime() + ": " + data[1] + "/" + data[0] + " - сервис приостановлен");
+                    return;
+                }
+
+                dataForPush
                         .stream()
-                        .filter(dataForPush -> dataForPush[1] != null)
-                        .forEach(dataForPush -> {
+                        .filter(item -> item[1] != null)
+                        .forEach(dataForPushItem -> {
 
-                    gcmSender.send(dataForPush[0], dataForPush[2], dataForPush[1], dataForPush[3], data);
+                    gcmSender.send(dataForPushItem[0], dataForPushItem[2], dataForPushItem[1], dataForPushItem[3], data);
                     try {
                         TimeUnit.MILLISECONDS.sleep(500);
                     } catch (InterruptedException e) {
@@ -218,7 +223,9 @@ public class DeviceConnectThread
      *  адрес, описание события и токен gcm
      * @param event                 - код события, который пришел с блока
      * @param code                  - hex номер радиоканала объекта
-     * @return                      - возвращается массив { строкадляотправки, токен}
+     * @return                      - возвращается массив { строка_для_отправки, токен, расшифровка_события, номер объекта }
+     *                                  в случае, если сервис работает и массив { "Сервис приостановлен" }, если сервис
+     *                                  отключен, например, за неуплату
      */
     private ArrayList<String[]> getDataForPush(String event, String code) {
 
@@ -232,16 +239,20 @@ public class DeviceConnectThread
         String query = "SELECT " + tablePrefix + "events_codes.desc AS `desc`, " +
                                     tablePrefix + "numbers_hex.number AS `number`, " +
                                     tablePrefix + "objects.address AS `address`, " +
+                                    tablePrefix + "users.m_enable AS `service_enable`, " +
                                     tablePrefix + "users_gcm_hash.gcm_hash AS `token` " +
                         "FROM " + tablePrefix + "events_codes " +
                         "LEFT JOIN " + tablePrefix + "numbers_hex ON " + tablePrefix + "numbers_hex.r_code = ? " +
                         "LEFT JOIN " + tablePrefix + "objects ON " + tablePrefix + "objects.number = " +
                                                                         tablePrefix + "numbers_hex.number " +
                         "LEFT JOIN " + tablePrefix + "users_gcm_hash ON " + tablePrefix + "users_gcm_hash.id_client = " +
-                                                "(SELECT " + tablePrefix + "objects.id_client " +
-                                                "FROM " + tablePrefix + "objects " +
-                                                "WHERE " + tablePrefix + "objects.number = " +
-                                                            tablePrefix + "numbers_hex.number) " +
+                            "(SELECT " + tablePrefix + "objects.id_client " +
+                            "FROM " + tablePrefix + "objects " +
+                            "WHERE " + tablePrefix + "objects.number = " + tablePrefix + "numbers_hex.number) " +
+                        "LEFT JOIN " + tablePrefix + "users ON " + tablePrefix + "users.id = " +
+                            "(SELECT " + tablePrefix + "objects.id_client " +
+                            "FROM " + tablePrefix + "objects " +
+                            "WHERE " + tablePrefix + "objects.number = " + tablePrefix + "numbers_hex.number) " +
                         "WHERE " + tablePrefix + "events_codes.code = ?;";
 
         try {
@@ -256,19 +267,27 @@ public class DeviceConnectThread
 
             while (rs.next()) {
 
-                String[] data =                             new String[4];
+                String[] data;
 
-                String address =                            rs.getString("address") != null ?
-                                                                decodeStr(rs.getString("address")).trim() :
-                                                                "-";
+                int serviceEnable =                         rs.getInt("service_enable");
 
-                data[0] =                                   getCurrentDateAndTime() + " (" +
-                                                                rs.getString("number") + ", " +
-                                                                address + ") " +
-                                                                rs.getString("desc");
-                data[1] =                                   rs.getString("token");
-                data[2] =                                   rs.getString("desc");
-                data[3] =                                   rs.getString("number");
+                if(serviceEnable == 0) {
+                    return null;
+                }
+
+                data =                             new String[4];
+
+                String address = rs.getString("address") != null ?
+                        decodeStr(rs.getString("address")).trim() :
+                        "-";
+
+                data[0] = getCurrentDateAndTime() + " (" +
+                        rs.getString("number") + ", " +
+                        address + ") " +
+                        rs.getString("desc");
+                data[1] = rs.getString("token");
+                data[2] = rs.getString("desc");
+                data[3] = rs.getString("number");
 
                 returnArray.add(data);
 
@@ -276,6 +295,7 @@ public class DeviceConnectThread
 
         } catch (SQLException e) {
             e.printStackTrace();
+            return null;
         } finally {
             try {
                 Main.getLoader().getSqlInstance().disconnectionFromSql(connection);

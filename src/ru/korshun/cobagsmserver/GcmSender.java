@@ -37,7 +37,12 @@ class GcmSender {
 
     public int send(String msg, String event, String token, String objectNumber, String[] data) {
 
-//        System.out.println(str + " " + token)
+//        System.out.println("msg: " + msg);
+//        System.out.println("event: " + event);
+//        System.out.println("token: " + token);
+//        System.out.println("objectNumber: " + objectNumber);
+//        System.out.println("data[0]: " + data[0]);
+//        System.out.println("data[1]: " + data[1]);
 
         try {
             // Prepare JSON containing the GCM message content. What to send and where to send.

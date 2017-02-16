@@ -245,12 +245,6 @@ public class ClientConnectThread
                         "FROM " + tablePrefix + "events_gsm " +
                         "LEFT JOIN " + tablePrefix + "events_codes " +
                             "ON " + tablePrefix + "events_codes.id = " + tablePrefix + "events_gsm.event_id " +
-                        "LEFT JOIN " + tablePrefix + "objects_phones " +
-                            "ON " + tablePrefix + "objects_phones.id_object = (SELECT " + tablePrefix + "objects.id " +
-                                                                                "FROM " + tablePrefix + "objects " +
-                                                                                "WHERE " + tablePrefix + "objects.number = ? " +
-                                                                                "AND " + tablePrefix + "objects.id_client = ?) " +
-                                                                                "AND " + tablePrefix + "objects_phones.id_client = ? " +
                         "WHERE " + tablePrefix + "events_gsm.object_id = " +
                             "(SELECT " + tablePrefix + "objects.id " +
                             "FROM " + tablePrefix + "objects " +
@@ -264,11 +258,8 @@ public class ClientConnectThread
 
             ps.setInt(1, objectNumber);
             ps.setInt(2, userId);
-            ps.setInt(3, userId);
-            ps.setInt(4, objectNumber);
-            ps.setInt(5, userId);
-            ps.setInt(6, listCount);
-            ps.setInt(7, step);
+            ps.setInt(3, listCount);
+            ps.setInt(4, step);
 
 //            System.out.println(ps.toString());
 
@@ -304,28 +295,57 @@ public class ClientConnectThread
             signals.put("signals", array);
 
             query = "SELECT " + tablePrefix + "objects.name AS `object_name`, " +
-                            tablePrefix + "objects.address AS `object_address` " +
+                            tablePrefix + "objects.address AS `object_address`, " +
+                            tablePrefix + "objects_phones.object_phone AS `object_phone`, " +
+                            "IF(coba_events_codes.desc LIKE '%Постановка%', '1', " +
+                            "IF(coba_events_codes.desc LIKE '%Снятие%', '2', '0')) as status " +
                     "FROM " + tablePrefix + "objects " +
+                    "LEFT JOIN " + tablePrefix + "objects_phones " +
+                        "ON " + tablePrefix + "objects_phones.id_object = " +
+                                "(SELECT " + tablePrefix + "objects.id " +
+                                "FROM " + tablePrefix + "objects " +
+                                "WHERE " + tablePrefix + "objects.number = ? " +
+                                    "AND " + tablePrefix + "objects.id_client = ?) " +
+                        "AND " + tablePrefix + "objects_phones.id_client = ? " +
+                    "LEFT JOIN " + tablePrefix + "events_codes ON " + tablePrefix + "events_codes.id = (" +
+                                "SELECT event_id " +
+                                "FROM " + tablePrefix + "events_gsm " +
+                                "WHERE object_id = " + tablePrefix + "objects.id AND event_id BETWEEN ? AND ? " +
+                                "ORDER BY time DESC " +
+                                "LIMIT 0,1) " +
                     "WHERE " + tablePrefix + "objects.id_client = ? " +
                         "AND " + tablePrefix + "objects.number = ?;";
 
             ps =                                            connection.prepareStatement(query);
 
-            ps.setInt(1, userId);
-            ps.setInt(2, objectNumber);
+            ps.setInt(1, objectNumber);
+            ps.setInt(2, userId);
+            ps.setInt(3, userId);
+            ps.setInt(4, 1);
+            ps.setInt(5, 35);
+            ps.setInt(6, userId);
+            ps.setInt(7, objectNumber);
 
             rs =                                            ps.executeQuery();
 
+//            System.out.println(ps.toString());
+
             String objectName = "-";
             String objectAddress = "-";
+            String objectPhone = "";
+            String objectGuardStatus = "";
 
             if(rs.next()) {
                 objectName =                                rs.getString("object_name");
                 objectAddress =                             rs.getString("object_address");
+                objectPhone =                               rs.getString("object_phone");
+                objectGuardStatus =                         rs.getString("status");
             }
 
             signals.put("objectName", decodeStr(objectName).trim());
             signals.put("objectAddress", decodeStr(objectAddress).trim());
+            signals.put("objectPhone", objectPhone);
+            signals.put("status", objectGuardStatus);
 
 //            System.out.println(array.length());
 
@@ -397,7 +417,7 @@ public class ClientConnectThread
                                 "(SELECT coba_events_gsm.event_id " +
                                 "FROM coba_events_gsm " +
                                 "WHERE coba_events_gsm.object_id = coba_objects.id " +
-                                "AND coba_events_gsm.event_id BETWEEN ? AND ? " +
+                                    "AND coba_events_gsm.event_id BETWEEN ? AND ? " +
                                 "ORDER BY coba_events_gsm.time DESC " +
                                 "LIMIT 0,1) " +
                         "LEFT JOIN coba_objects ON coba_objects.id = coba_objects_phones.id_object " +
@@ -571,6 +591,7 @@ public class ClientConnectThread
         String query = "SELECT COUNT(*) AS `size`, " +
                             tablePrefix + "users.id AS `id`, " +
                             tablePrefix + "users.name AS `name`, " +
+                            tablePrefix + "users.m_enable AS `service_enable`, " +
                             tablePrefix + "objects.number AS `number` " +
                         "FROM " + tablePrefix + "objects " +
                         "LEFT JOIN " + tablePrefix + "users ON " + tablePrefix + "users.id = " + tablePrefix + "objects.id_client " +
@@ -591,12 +612,13 @@ public class ClientConnectThread
 
             rs =                                            ps.executeQuery();
 
-            int size = 0, userId = 0;
+            int size = 0, userId = 0, serviceEnable = 0;
             String objects = "", userName = "";
             JSONObject userIdData = new JSONObject();
 
             while(rs.next()) {
 
+                serviceEnable =                             rs.getInt("service_enable");
                 size =                                      rs.getInt("size");
                 userId =                                    rs.getInt("id");
                 userName =                                  rs.getString("name");
@@ -604,6 +626,11 @@ public class ClientConnectThread
 
             }
 
+            if(serviceEnable == 0) {
+                sendOperationStatusToClient(out, STATUS_ERROR, "Доступ закрыт, обратитесь в офис");
+                System.out.println(getCurrentDateAndTime() + ": Доступ закрыт");
+                return;
+            }
 
             if(size == 1) {
                 userIdData.put("userId", userId);
