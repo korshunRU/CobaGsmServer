@@ -100,7 +100,7 @@ public class ClientConnectThread
 
 
                     case "sendToken":
-                        updateToken(data.getString("token"), data.getInt("userId"), data.getString("mac"), out);
+                        updateUserData(data.getString("token"), data.getInt("userId"), data.getString("mac"), null, out);
                         break;
 
 
@@ -111,33 +111,6 @@ public class ClientConnectThread
 
                     case "getObjectsList":
                         getObjectsListFromMySql(data, out);
-
-//                        JSONObject objects = new JSONObject();
-//                        JSONArray array = new JSONArray();
-//
-//                        Map<String, String> object = new HashMap<>();
-//                        object.put("number", "2548" + " " + data.get("userId"));
-//                        object.put("address", "Ленина 10-12 (1 эт.)");
-//                        array.put(object);
-//
-//                        Map<String, String> object1 = new HashMap<>();
-//                        object1.put("number", "17587");
-//                        object1.put("address", "Малышева 45 (1 эт.)");
-//                        array.put(object1);
-//
-//                        Map<String, String> object2 = new HashMap<>();
-//                        object2.put("number", "22548");
-//                        object2.put("address", "Московская 33А, оф. 12 (2 эт.)");
-//                        array.put(object2);
-//
-//                        objects.put("objects", array);
-//                        returnStatus.put("data", objects);
-//                        returnStatus.put("status", 1);
-//
-////                        System.out.println(returnStatus);
-//
-//                        out.writeUTF(returnStatus.toString());
-//                        out.flush();
                         break;
 
 
@@ -148,36 +121,6 @@ public class ClientConnectThread
 
                     case "getSignalsList":
                         getSignalsListFromMySql(data, out);
-
-//                        JSONObject signals = new JSONObject();
-//                        JSONArray arrayS = new JSONArray();
-//
-//                        Map<String, String> signal = new HashMap<>();
-//                        signal.put("date", "01.01.2016");
-//                        signal.put("time", "08:12:58");
-//                        signal.put("event", data.get("objectNumber") + " " + data.get("userId") + " " + "Снятие (Пользователь 1)");
-//                        arrayS.put(signal);
-//
-//                        Map<String, String> signal1 = new HashMap<>();
-//                        signal1.put("date", "01.01.2016");
-//                        signal1.put("time", "08:12:58");
-//                        signal1.put("event", "Снятие (Пользователь 1)");
-//                        arrayS.put(signal1);
-//
-//                        Map<String, String> signal2 = new HashMap<>();
-//                        signal2.put("date", "01.01.2016");
-//                        signal2.put("time", "08:12:58");
-//                        signal2.put("event", "Снятие (Пользователь 1)");
-//                        arrayS.put(signal2);
-//
-//                        signals.put("signals", arrayS);
-//                        returnStatus.put("data", signals);
-//                        returnStatus.put("status", 1);
-//
-////                        System.out.println(returnStatus);
-//
-//                        out.writeUTF(returnStatus.toString());
-//                        out.flush();
                         break;
 
 
@@ -586,6 +529,7 @@ public class ClientConnectThread
         }
 
         String mac =                                        data.getString("mac");
+        String api =                                        data.getString("api");
 
 
         String query = "SELECT COUNT(*) AS `size`, " +
@@ -638,7 +582,7 @@ public class ClientConnectThread
                 userIdData.put("listObjects", objects.substring(0, objects.length() - 1));
 
                 sendOperationStatusToClient(out, STATUS_COMPLITE, userIdData);
-                updateToken(token, userId, mac);
+                updateUserData(token, userId, mac, api);
                 addEnterDateTime(userId);
                 System.out.println(getCurrentDateAndTime() + ": Авторизация успешна");
             }
@@ -736,12 +680,14 @@ public class ClientConnectThread
      *  Обновление gcm ключа клиента
      * @param token                 - ключ
      * @param userId                - id пользователя
-     * @param mac                   mac- mac телефона пользователя
+     * @param mac                   - mac телефона пользователя
+     * @param api                   - версия ос на телефоне
      * @throws IOException
      */
-    private void updateToken(String token, int userId, String mac) throws IOException {
-        updateToken(token, userId, mac, null);
+    private void updateUserData(String token, int userId, String mac, String api) throws IOException {
+        updateUserData(token, userId, mac, api, null);
     }
+
 
 
     /**
@@ -752,7 +698,8 @@ public class ClientConnectThread
      * @param out                   - ссылка на DataOutputStream
      * @throws IOException
      */
-    private void updateToken(String token, int userId, String mac, DataOutputStream out) throws IOException {
+    private void updateUserData(String token, int userId, String mac, String api, DataOutputStream out)
+            throws IOException {
 
         Connection connection =                             createConnect();
         PreparedStatement ps;
@@ -764,9 +711,11 @@ public class ClientConnectThread
         String query = "INSERT INTO " + tablePrefix + "users_gcm_hash " +
                         "SET " + tablePrefix + "users_gcm_hash.id_client = ?, " +
                                 tablePrefix + "users_gcm_hash.gcm_hash = ?, " +
+                                tablePrefix + "users_gcm_hash.v_api = ?, " +
                                 tablePrefix + "users_gcm_hash.phone_mac = ? " +
                         "ON DUPLICATE KEY UPDATE " +
                                 tablePrefix + "users_gcm_hash.gcm_hash = ?," +
+                                tablePrefix + "users_gcm_hash.v_api = ?," +
                                 tablePrefix + "users_gcm_hash.phone_mac = ?;";
 
         try {
@@ -774,9 +723,11 @@ public class ClientConnectThread
 
             ps.setInt(1, userId);
             ps.setString(2, token);
-            ps.setString(3, mac);
-            ps.setString(4, token);
-            ps.setString(5, mac);
+            ps.setString(3, api);
+            ps.setString(4, mac);
+            ps.setString(5, token);
+            ps.setString(6, api);
+            ps.setString(7, mac);
 
 //            System.out.println(ps.toString());
             ps.executeUpdate();

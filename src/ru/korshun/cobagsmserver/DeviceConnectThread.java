@@ -1,7 +1,13 @@
 package ru.korshun.cobagsmserver;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,7 +19,7 @@ public class DeviceConnectThread
         extends ConnectThread
         implements Runnable {
 
-    private Logger                      logger =            Main.getLoader().getLoggerInstance();
+//    private Logger                      logger =            Main.getLoader().getLoggerInstance();
 
     private DatagramPacket              receivePacket;
 
@@ -21,6 +27,8 @@ public class DeviceConnectThread
     private String                      deviceIp;
 
     private GcmSender                   gcmSender;
+
+    private final String LOG_FILE_PATH = "logs";
 
 
     public DeviceConnectThread(DatagramPacket receivePacket) {
@@ -51,11 +59,11 @@ public class DeviceConnectThread
             System.out.println(outputStr);
             data =                                          parseStrForPush(inStr);
 
-            try {
-                logger.writeToLog(deviceIp, data[1]);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+//            try {
+//                logger.writeToLog(deviceIp, data[1]);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
 
             addPhoneToMySql(data[1], data[2]);
 
@@ -65,20 +73,24 @@ public class DeviceConnectThread
 
                 if(dataForPush == null) {
                     System.out.println(getCurrentDateAndTime() + ": " + data[1] + "/" + data[0] + " - сервис приостановлен");
+                    writeEventToFile(data[1], "сервис приостановлен");
                     return;
                 }
+
+                writeEventToFile(data[1], inStr.substring(0, inStr.indexOf(" ")).trim());
 
                 dataForPush
                         .stream()
                         .filter(item -> item[1] != null)
                         .forEach(dataForPushItem -> {
 
-                    gcmSender.send(dataForPushItem[0], dataForPushItem[2], dataForPushItem[1], dataForPushItem[3], data);
-                    try {
-                        TimeUnit.MILLISECONDS.sleep(500);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                            gcmSender.send(dataForPushItem[0], dataForPushItem[2], dataForPushItem[1], dataForPushItem[3], data);
+
+                            try {
+                                TimeUnit.MILLISECONDS.sleep(500);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
 
                 });
 
@@ -87,6 +99,11 @@ public class DeviceConnectThread
 
         else if(inStr.startsWith("RECEIVED:")) {
             System.out.println(outputStr);
+
+            String code = inStr.substring(inStr.lastIndexOf(" "), inStr.indexOf("/")).trim();
+            writeEventToFile(code, inStr);
+
+//            System.out.println(code);
 //            outputStr =                                    ": " + inStr + " ";
         }
 
@@ -98,6 +115,74 @@ public class DeviceConnectThread
 
 
     }
+
+
+
+    /**
+     *  Функция Вытаскивает из БД номер объекта и записывает событие в файл
+     * @param code                  - радиоканал, с которого поступил сигнал
+     * @param text                  - текст для записи в файл
+     * @return                      - при удачном завершении возвращается true
+     */
+    private boolean writeEventToFile(String code, String text) {
+
+        Connection connection = createConnect();
+        PreparedStatement ps;
+        ResultSet rs;
+
+        String query = "SELECT " + tablePrefix + "numbers_hex.number AS `number` " +
+                        "FROM " + tablePrefix + "numbers_hex " +
+                        "WHERE " + tablePrefix + "numbers_hex.r_code = ?;";
+
+        try {
+            ps = connection.prepareStatement(query);
+            ps.setString(1, code);
+
+//            System.out.println(ps.toString());
+
+            rs = ps.executeQuery();
+
+            if(rs.next()) {
+                int number = rs.getInt("number");
+
+                if(!new File(LOG_FILE_PATH).exists()) {
+                    if(!new File(LOG_FILE_PATH).mkdir()) {
+                        System.out.println("Ошибка создания лог-директории");
+                    }
+                }
+
+                File logFile = new File(LOG_FILE_PATH + File.separator + number + "_udp.txt");
+
+                if(!logFile.exists()) {
+                    try {
+                        if(!logFile.createNewFile()) {
+                            System.out.println("Ошибка создания лог-файла");
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                try(BufferedWriter writer = new BufferedWriter(new FileWriter(logFile, true))){
+                    text += "\r\n";
+                    writer.append(String.format("%s %s", getCurrentDateAndTime(), text));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+
+                return true;
+            }
+
+            return false;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+    }
+
 
 
     /**
