@@ -11,6 +11,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -517,6 +521,17 @@ public class ClientConnectThread
         String login =                                      data.getString("login");
         String pass =                                       data.getString("pass");
         String token =                                      data.getString("token");
+//        String clientTime =                                 data.getString("time");
+
+        if(data.has("time")) {
+            long time = Calendar.getInstance().getTimeInMillis();
+            Date dateClient = new Date(data.getLong("time"));
+            Date dateServer = new Date(time);
+            DateFormat formatter = new SimpleDateFormat("HH:mm:ss:SSS");
+            String dateFormattedClient = formatter.format(dateClient);
+            String dateFormattedServer = formatter.format(dateServer);
+            System.out.println(String.format("Client: %s, Server: %s", dateFormattedClient, dateFormattedServer));
+        }
 
         if(!data.has("mac")) {
             sendOperationStatusToClient(out, STATUS_ERROR, "Обновите приложение");

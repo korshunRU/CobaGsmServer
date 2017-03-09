@@ -19,6 +19,11 @@ class Settings {
 //    private final String                PASSWORD =          ",fhvfktq82";
     private final String                DB_TABLE_PREFIX =       "coba_";
 
+    /**
+     *  Погрешность во времени. Требуется для синхронизации метки времени между клиентом и сервером.
+     *  В данном случае это число секунд, на которое время сервера может превышать время клиента
+     */
+    private final int                   TIME_FAULT_IN_SECONDS = 15;
 
     /**
      *  Порт, который "слушает" TCP сервер
@@ -122,5 +127,9 @@ class Settings {
 
     public String getLOG_PATH() {
         return LOG_PATH;
+    }
+
+    public int getTIME_FAULT_IN_SECONDS() {
+        return TIME_FAULT_IN_SECONDS;
     }
 }
