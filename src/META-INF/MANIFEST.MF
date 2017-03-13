@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
 Class-Path: lib/commons-io-2.4.jar lib/json-20160212.jar lib/mysql-con
- nector-java-5.1.38-bin.jar
+ nector-java-5.1.38-bin.jar lib/CryptRSA.jar
 Main-Class: ru.korshun.cobagsmserver.Main
 

@@ -66,11 +66,13 @@ public class ClientConnectThread
                     break;
                 }
 
-//                System.out.println(checkJSON(inStr));
+//                System.out.println("1");
 
                 query =                                     new JSONObject(inStr);
 
                 String type =                               query.getString("type");
+
+//                System.out.println("2");
 
                 if(type.equals("exit")) {
                     break;
@@ -79,12 +81,16 @@ public class ClientConnectThread
                 outputStr +=                                query;
                 System.out.println(outputStr);
 
+//                System.out.println("3");
+
                 if(!query.has("version") || query.getInt("version") < VERSION) {
                     outputStr =                             getCurrentDateAndTime() + ": version error!";
                     sendOperationStatusToClient(out, STATUS_ERROR, "Обновите приложение");
                     System.out.println(outputStr);
                     break;
                 }
+
+//                System.out.println("WWW");
 
                 try {
                     if(!keyInitialization(socket, type, query.getString("key"))) {
