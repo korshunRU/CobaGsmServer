@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="CryptRSA">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/CryptRSA.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

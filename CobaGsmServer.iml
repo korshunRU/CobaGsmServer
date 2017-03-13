@@ -10,5 +10,6 @@
     <orderEntry type="library" name="commons-io-2.4" level="project" />
     <orderEntry type="library" name="json-20160212" level="project" />
     <orderEntry type="library" name="mysql-connector-java-5.1.38-bin" level="project" />
+    <orderEntry type="library" name="CryptRSA" level="project" />
   </component>
 </module>

@@ -1,22 +1,21 @@
 package ru.korshun.cobagsmserver;
 
 
+import com.mkyong.asymmetric.CryptRSA;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.*;
 import java.net.Socket;
+import java.security.PrivateKey;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
 
 @SuppressWarnings("FieldCanBeLocal")
 public class ClientConnectThread
@@ -26,6 +25,9 @@ public class ClientConnectThread
     private Socket                      socket;
 
     private String                      outputStr =         "";
+
+    private boolean                     checkCommand =      true;
+    private boolean                     checkIP =           false;
 
     private final int                   VERSION =           5;
 
@@ -57,7 +59,8 @@ public class ClientConnectThread
                         parseStrForPush(inStr);
                     }
                     else {
-                        outputStr +=                        ": UNKNOWN QUERY: " + inStr + " ";
+                        outputStr =                         getCurrentDateAndTime() + ": UNKNOWN QUERY: " + inStr + " ";
+                        System.out.println(outputStr);
 //                        System.out.println(getCurrentDateAndTime() + ": UNKNOWN QUERY: " + inStr);
                     }
                     break;
@@ -73,15 +76,30 @@ public class ClientConnectThread
                     break;
                 }
 
+                outputStr +=                                query;
+                System.out.println(outputStr);
+
                 if(!query.has("version") || query.getInt("version") < VERSION) {
-                    outputStr +=                            ": version error!";
+                    outputStr =                             getCurrentDateAndTime() + ": version error!";
                     sendOperationStatusToClient(out, STATUS_ERROR, "Обновите приложение");
                     System.out.println(outputStr);
                     break;
                 }
 
-                outputStr +=                                query;
-                System.out.println(outputStr);
+                try {
+                    if(!keyInitialization(socket, type, query.getString("key"))) {
+                        outputStr =                         getCurrentDateAndTime() + ": initialization error!";
+                        sendOperationStatusToClient(out, STATUS_ERROR, "Неверный запрос инициализации");
+                        System.out.println(outputStr);
+                        break;
+                    }
+                } catch (Exception e) {
+//                    e.printStackTrace();
+                    outputStr =                             getCurrentDateAndTime() + ": check key error! " + e.getMessage();
+                    sendOperationStatusToClient(out, STATUS_ERROR, "Ошибка инициализации на сервере");
+                    System.out.println(outputStr);
+                    break;
+                }
 
                 JSONObject data =                           query.getJSONObject("data");
 //                JSONObject returnStatus =                   new JSONObject();
@@ -144,6 +162,39 @@ public class ClientConnectThread
     }
 
 
+    /**
+     *  Функция проверяет пришедший ключ на соответствие требованиям
+     * @param socket            - ссылка на сокет, нужна для получения ip адреса
+     * @param type              - тип запроса (вход, запрос сигналов и т.п.)
+     * @param key               - сам ключ, зашифрованный с помощью RSA
+     * @return                  - если ключ прошел проверку, возвращается true
+     * @throws Exception
+     */
+    private boolean keyInitialization(Socket socket, String type, String key) throws Exception {
+//        System.out.println(socket.getRemoteSocketAddress() + " " + key);
+
+        CryptRSA cryptRSA = new CryptRSA();
+        PrivateKey privateKey = cryptRSA.getPrivate("key/privateKey");
+        String keyDecrypt = cryptRSA.decryptText(key, privateKey);
+        String[] keyArray = keyDecrypt.split(":");
+        String clientIp = socket.getInetAddress().toString().substring(1);
+
+//        System.out.println(clientIp + " " + keyDecrypt);
+
+        if(checkCommand) {
+            if (!keyArray[0].equals(type)) {
+                return false;
+            }
+        }
+
+        if(checkIP) {
+            if(!keyArray[0].equals(type) || !keyArray[1].equals(clientIp)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
 
 
@@ -521,22 +572,47 @@ public class ClientConnectThread
         String login =                                      data.getString("login");
         String pass =                                       data.getString("pass");
         String token =                                      data.getString("token");
-//        String clientTime =                                 data.getString("time");
 
-        if(data.has("time")) {
-            long time = Calendar.getInstance().getTimeInMillis();
-            Date dateClient = new Date(data.getLong("time"));
-            Date dateServer = new Date(time);
-            DateFormat formatter = new SimpleDateFormat("HH:mm:ss:SSS");
-            String dateFormattedClient = formatter.format(dateClient);
-            String dateFormattedServer = formatter.format(dateServer);
-            System.out.println(String.format("Client: %s, Server: %s", dateFormattedClient, dateFormattedServer));
-        }
+//        if(data.has("time")) {
+//
+//            try {
+//                CryptRSA cryptRSA = new CryptRSA();
+//                PrivateKey privateKey = cryptRSA.getPrivate("key/privateKey");
+//                String keyD = cryptRSA.decryptText(data.getString("time"), privateKey);
+//
+////                System.out.println(keyD);
+//
+//                long timeServer = Calendar.getInstance().getTimeInMillis();
+//                long timeClient = Long.parseLong(keyD);
+//                long timeFault = Main.getLoader().getSettingsInstance().getTIME_FAULT_IN_SECONDS();
+//
+//                System.out.println(String.format("Client: %s, Server: %s", timeClient, timeServer));
+//
+//                Date dateClient = new Date(timeClient);
+//                Date dateServer = new Date(timeServer);
+//                DateFormat formatter = new SimpleDateFormat("HH:mm:ss:SSS");
+//                String dateFormattedClient = formatter.format(dateClient);
+//                String dateFormattedServer = formatter.format(dateServer);
+//                System.out.println(String.format("Client: %s, Server: %s", dateFormattedClient, dateFormattedServer));
+//
+//
+//                if(timeServer - timeClient <= timeFault) {
+//                    System.out.println("OK");
+//                }
+//                else {
+//                    System.out.println("Error");
+//                }
+//
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//
+//        }
 
         if(!data.has("mac")) {
             sendOperationStatusToClient(out, STATUS_ERROR, "Обновите приложение");
             return;
-        }
+    }
 
         if(connection == null) {
             sendOperationStatusToClient(out, STATUS_ERROR, "Сервер БД недоступен");

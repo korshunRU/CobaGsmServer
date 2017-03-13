@@ -23,7 +23,7 @@ class Settings {
      *  Погрешность во времени. Требуется для синхронизации метки времени между клиентом и сервером.
      *  В данном случае это число секунд, на которое время сервера может превышать время клиента
      */
-    private final int                   TIME_FAULT_IN_SECONDS = 15;
+    private final long                  TIME_FAULT_IN_SECONDS = 15000L;
 
     /**
      *  Порт, который "слушает" TCP сервер
@@ -129,7 +129,7 @@ class Settings {
         return LOG_PATH;
     }
 
-    public int getTIME_FAULT_IN_SECONDS() {
+    public long getTIME_FAULT_IN_SECONDS() {
         return TIME_FAULT_IN_SECONDS;
     }
 }
