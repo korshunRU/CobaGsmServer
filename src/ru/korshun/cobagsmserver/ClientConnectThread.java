@@ -649,7 +649,7 @@ public class ClientConnectThread
             ps.setString(2, login.trim());
             ps.setString(3, pass);
 
-            System.out.println(ps.toString());
+//            System.out.println(ps.toString());
 
             rs =                                            ps.executeQuery();
 
@@ -804,7 +804,7 @@ public class ClientConnectThread
         Connection connection =                             createConnect();
         PreparedStatement ps;
 
-        if(connection == null || userId == 0){
+        if(connection == null || userId == 0 || token.length() == 0){
             return;
         }
 
