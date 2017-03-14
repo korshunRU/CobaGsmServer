@@ -669,7 +669,7 @@ public class ClientConnectThread
 
             if(serviceEnable == 0) {
                 sendOperationStatusToClient(out, STATUS_ERROR, "Доступ закрыт, обратитесь в офис");
-                System.out.println(getCurrentDateAndTime() + ": Доступ закрыт");
+                System.out.println(getCurrentDateAndTime() + ": Доступ закрыт. SIZE: " + size);
                 return;
             }
 
