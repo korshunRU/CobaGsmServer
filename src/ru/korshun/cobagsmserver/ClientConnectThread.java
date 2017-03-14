@@ -649,9 +649,11 @@ public class ClientConnectThread
             ps.setString(2, login.trim());
             ps.setString(3, pass);
 
-//            System.out.println(ps.toString());
+            System.out.println(ps.toString());
 
             rs =                                            ps.executeQuery();
+
+//            System.out.println();
 
             int size = 0, userId = 0, serviceEnable = 0;
             String objects = "", userName = "";
@@ -667,13 +669,14 @@ public class ClientConnectThread
 
             }
 
-            if(serviceEnable == 0) {
-                sendOperationStatusToClient(out, STATUS_ERROR, "Доступ закрыт, обратитесь в офис");
-                System.out.println(getCurrentDateAndTime() + ": Доступ закрыт. SIZE: " + size);
-                return;
-            }
-
             if(size == 1) {
+
+                if(serviceEnable == 0) {
+                    sendOperationStatusToClient(out, STATUS_ERROR, "Доступ закрыт, обратитесь в офис");
+                    System.out.println(getCurrentDateAndTime() + ": Доступ закрыт");
+                    return;
+                }
+
                 userIdData.put("userId", userId);
                 userIdData.put("userName", decodeStr(userName).trim());
                 userIdData.put("listObjects", objects.substring(0, objects.length() - 1));
