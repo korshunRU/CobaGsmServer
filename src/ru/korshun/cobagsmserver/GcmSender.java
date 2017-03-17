@@ -62,10 +62,10 @@ class GcmSender {
             jNotification.put("sound",                      NOTIFICATION_SOUND);
 
             jGcmData.put("data",                            jData);
-//            jGcmData.put("notification",                    jNotification);
+            jGcmData.put("notification",                    jNotification);
             jGcmData.put("to",                              token.trim());
             jGcmData.put("priority",                        PRIORITY_HIGH);
-            jGcmData.put("time_to_live",                    60 * 60 * TIME_TO_LIVE);
+//            jGcmData.put("time_to_live",                    60 * 60 * TIME_TO_LIVE);
 
             // Create connection to send GCM Message request.
 //            URL url = new URL("https://android.googleapis.com/gcm/send");
