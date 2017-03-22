@@ -346,8 +346,8 @@ public class ClientConnectThread
                 objectGuardStatus =                         rs.getString("status");
             }
 
-            signals.put("objectName", decodeStr(objectName).trim());
-            signals.put("objectAddress", decodeStr(objectAddress).trim());
+            signals.put("objectName", objectName == null ? "-" : decodeStr(objectName).trim());
+            signals.put("objectAddress", objectAddress == null ? "-" : decodeStr(objectAddress).trim());
             signals.put("objectPhone", objectPhone);
             signals.put("status", objectGuardStatus);
 
@@ -532,9 +532,9 @@ public class ClientConnectThread
 
 //            System.out.println(array.toString());
 
-            objects.put("userName", decodeStr(userName).trim());
-            objects.put("userAddress", decodeStr(userAddress).trim());
-            objects.put("userPhone", decodeStr(userPhone).trim());
+            objects.put("userName", userName == null ? "-" : decodeStr(userName).trim());
+            objects.put("userAddress", userAddress == null ? "-" : decodeStr(userAddress).trim());
+            objects.put("userPhone", userPhone == null ? "-" : decodeStr(userPhone).trim());
             objects.put("objects", array);
 
 
