@@ -814,6 +814,7 @@ public class ClientConnectThread
                                 tablePrefix + "users_gcm_hash.v_api = ?, " +
                                 tablePrefix + "users_gcm_hash.phone_mac = ? " +
                         "ON DUPLICATE KEY UPDATE " +
+                                tablePrefix + "users_gcm_hash.id_client = ?, " +
                                 tablePrefix + "users_gcm_hash.gcm_hash = ?," +
                                 tablePrefix + "users_gcm_hash.v_api = ?," +
                                 tablePrefix + "users_gcm_hash.phone_mac = ?;";
@@ -825,9 +826,10 @@ public class ClientConnectThread
             ps.setString(2, token);
             ps.setString(3, api);
             ps.setString(4, mac);
-            ps.setString(5, token);
-            ps.setString(6, api);
-            ps.setString(7, mac);
+            ps.setInt(5, userId);
+            ps.setString(6, token);
+            ps.setString(7, api);
+            ps.setString(8, mac);
 
 //            System.out.println(ps.toString());
             ps.executeUpdate();
