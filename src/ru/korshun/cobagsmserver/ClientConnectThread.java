@@ -29,7 +29,7 @@ public class ClientConnectThread
     private boolean                     checkCommand =      true;
     private boolean                     checkIP =           false;
 
-    private final int                   VERSION =           6;
+    private final int                   VERSION =           5;
 
     ClientConnectThread(Socket socket) {
         this.socket =                                       socket;
