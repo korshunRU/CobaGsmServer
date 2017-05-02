@@ -29,7 +29,7 @@ public class ClientConnectThread
     private boolean                     checkCommand =      true;
     private boolean                     checkIP =           false;
 
-    private final int                   VERSION =           5;
+    private final int                   VERSION =           6;
 
     ClientConnectThread(Socket socket) {
         this.socket =                                       socket;
@@ -243,9 +243,9 @@ public class ClientConnectThread
 
         String query = "SELECT  DATE_FORMAT(" +  tablePrefix + "events_gsm.time, '%d.%m.%Y') AS `date`, " +
                                 "DATE_FORMAT(" + tablePrefix + "events_gsm.time, '%H:%i:%S') AS `time`, " +
-                                tablePrefix + "events_codes.desc AS `event`, " +
-                                "IF(coba_events_codes.desc LIKE '%Постановка%', '1', " +
-                                "IF(coba_events_codes.desc LIKE '%Снятие%', '2', '0')) as status " +
+                                tablePrefix + "events_codes.desc AS `event` " +
+//                                "IF(coba_events_codes.desc LIKE '%Постановка%', '1', " +
+//                                "IF(coba_events_codes.desc LIKE '%Снятие%', '2', '0')) as status " +
                         "FROM " + tablePrefix + "events_gsm " +
                         "LEFT JOIN " + tablePrefix + "events_codes " +
                             "ON " + tablePrefix + "events_codes.id = " + tablePrefix + "events_gsm.event_id " +
@@ -284,7 +284,7 @@ public class ClientConnectThread
 
                 Map<String, String> signal =                new HashMap<>();
 
-                signal.put("status", rs.getString("status"));
+//                signal.put("status", rs.getString("status"));
                 signal.put("date", date);
                 signal.put("time", time);
                 signal.put("event", event);
@@ -299,36 +299,36 @@ public class ClientConnectThread
             signals.put("signals", array);
 
             query = "SELECT " + tablePrefix + "objects.name AS `object_name`, " +
-                            tablePrefix + "objects.address AS `object_address`, " +
-                            tablePrefix + "objects_phones.object_phone AS `object_phone`, " +
-                            "IF(coba_events_codes.desc LIKE '%Постановка%', '1', " +
-                            "IF(coba_events_codes.desc LIKE '%Снятие%', '2', '0')) as status " +
+                            tablePrefix + "objects.address AS `object_address` " +
+//                            tablePrefix + "objects_phones.object_phone AS `object_phone`, " +
+//                            "IF(coba_events_codes.desc LIKE '%Постановка%', '1', " +
+//                            "IF(coba_events_codes.desc LIKE '%Снятие%', '2', '0')) as status " +
                     "FROM " + tablePrefix + "objects " +
-                    "LEFT JOIN " + tablePrefix + "objects_phones " +
-                        "ON " + tablePrefix + "objects_phones.id_object = " +
-                                "(SELECT " + tablePrefix + "objects.id " +
-                                "FROM " + tablePrefix + "objects " +
-                                "WHERE " + tablePrefix + "objects.number = ? " +
-                                    "AND " + tablePrefix + "objects.id_client = ?) " +
-                        "AND " + tablePrefix + "objects_phones.id_client = ? " +
-                    "LEFT JOIN " + tablePrefix + "events_codes ON " + tablePrefix + "events_codes.id = (" +
-                                "SELECT event_id " +
-                                "FROM " + tablePrefix + "events_gsm " +
-                                "WHERE object_id = " + tablePrefix + "objects.id AND event_id BETWEEN ? AND ? " +
-                                "ORDER BY time DESC " +
-                                "LIMIT 0,1) " +
+//                    "LEFT JOIN " + tablePrefix + "objects_phones " +
+//                        "ON " + tablePrefix + "objects_phones.id_object = " +
+//                                "(SELECT " + tablePrefix + "objects.id " +
+//                                "FROM " + tablePrefix + "objects " +
+//                                "WHERE " + tablePrefix + "objects.number = ? " +
+//                                    "AND " + tablePrefix + "objects.id_client = ?) " +
+//                        "AND " + tablePrefix + "objects_phones.id_client = ? " +
+//                    "LEFT JOIN " + tablePrefix + "events_codes ON " + tablePrefix + "events_codes.id = (" +
+//                                "SELECT event_id " +
+//                                "FROM " + tablePrefix + "events_gsm " +
+//                                "WHERE object_id = " + tablePrefix + "objects.id AND event_id BETWEEN ? AND ? " +
+//                                "ORDER BY time DESC " +
+//                                "LIMIT 0,1) " +
                     "WHERE " + tablePrefix + "objects.id_client = ? " +
                         "AND " + tablePrefix + "objects.number = ?;";
 
             ps =                                            connection.prepareStatement(query);
 
-            ps.setInt(1, objectNumber);
-            ps.setInt(2, userId);
-            ps.setInt(3, userId);
-            ps.setInt(4, 1);
-            ps.setInt(5, 35);
-            ps.setInt(6, userId);
-            ps.setInt(7, objectNumber);
+//            ps.setInt(1, objectNumber);
+//            ps.setInt(2, userId);
+//            ps.setInt(3, userId);
+//            ps.setInt(4, 1);
+//            ps.setInt(5, 35);
+            ps.setInt(1, userId);
+            ps.setInt(2, objectNumber);
 
             rs =                                            ps.executeQuery();
 
@@ -336,20 +336,20 @@ public class ClientConnectThread
 
             String objectName = "-";
             String objectAddress = "-";
-            String objectPhone = "";
-            String objectGuardStatus = "";
+//            String objectPhone = "";
+//            String objectGuardStatus = "";
 
             if(rs.next()) {
                 objectName =                                rs.getString("object_name");
                 objectAddress =                             rs.getString("object_address");
-                objectPhone =                               rs.getString("object_phone");
-                objectGuardStatus =                         rs.getString("status");
+//                objectPhone =                               rs.getString("object_phone");
+//                objectGuardStatus =                         rs.getString("status");
             }
 
             signals.put("objectName", objectName == null ? "-" : decodeStr(objectName).trim());
             signals.put("objectAddress", objectAddress == null ? "-" : decodeStr(objectAddress).trim());
-            signals.put("objectPhone", objectPhone);
-            signals.put("status", objectGuardStatus);
+//            signals.put("objectPhone", objectPhone);
+//            signals.put("status", objectGuardStatus);
 
 //            System.out.println(array.length());
 
@@ -471,6 +471,7 @@ public class ClientConnectThread
                 userName =                                  rs.getString("user_name");
                 userAddress =                               rs.getString("user_address");
                 userPhone =                                 rs.getString("user_phone");
+                String objectPhone =                        rs.getString("phone");
 
                 if(number == null) {
                     continue;
@@ -480,6 +481,7 @@ public class ClientConnectThread
 
                 object.put("status", rs.getString("status"));
                 object.put("number", number);
+                object.put("objectPhone", objectPhone);
                 object.put("type", type != null ? decodeStr(type).trim() : "-");
                 object.put("address", address != null ? decodeStr(address).trim() : "-");
 
