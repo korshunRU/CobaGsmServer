@@ -39,7 +39,7 @@ public class DeviceConnectThread
         if(!ip.contains("127.0.0.1")) {
 //            System.out.println(this.receivePacket.getAddress().toString());
             deviceIp =                                      ip.substring(ip.indexOf("/") + 1);
-            outputStr +=                                    getCurrentDateAndTime() + ": UDP Клиент подключился: " +
+            outputStr +=                                    getCurrentDateAndTime() + ": UDP: " +
                                                                 deviceIp + " ";
         }
 
@@ -99,6 +99,7 @@ public class DeviceConnectThread
 
         else if(inStr.startsWith("RECEIVED:")) {
             System.out.println(outputStr);
+            System.out.println(getCurrentDateAndTime() + ": try to write ...");
 
             String code = inStr.substring(inStr.lastIndexOf(" "), inStr.indexOf("/")).trim();
             writeEventToFile(code, inStr);

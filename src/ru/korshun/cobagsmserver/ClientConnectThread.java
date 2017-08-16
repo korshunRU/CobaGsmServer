@@ -27,7 +27,7 @@ public class ClientConnectThread
     private String                      outputStr =         "";
 
     private boolean                     checkCommand =      true;
-    private boolean                     checkIP =           false;
+    private boolean                     checkIP =           true;
 
     private final int                   VERSION =           5;
 
