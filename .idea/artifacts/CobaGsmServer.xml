@@ -6,6 +6,7 @@
         <element id="library" level="project" name="commons-io-2.4" />
         <element id="library" level="project" name="CryptRSA" />
         <element id="library" level="project" name="json-20160212" />
+        <element id="library" level="project" name="javax.mail" />
       </element>
       <element id="archive" name="CobaGsmServer.jar">
         <element id="module-output" name="CobaGsmServer" />

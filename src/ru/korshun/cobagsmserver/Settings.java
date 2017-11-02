@@ -30,9 +30,9 @@ class Settings {
     /**
      *  Получатели обращений клиентов
      */
-    private final String                OFFICE_RECEIVER =       "kanibal_2002@mail.ru,dbadm@sowa.ru";//info@sowa.ru,orbita2@sowa.ru,zaria1@sowa.ru
-    private final String                SERVICE_RECEIVER =      "kanibal_2002@mail.ru,dbadm@sowa.ru";
-    private final String                CODERS_RECEIVER =       "kanibal_2002@mail.ru,dbadm@sowa.ru";
+    private final String                OFFICE_RECEIVER =       "kanibal_2002@mail.ru,info@sowa.ru,orbita2@sowa.ru,zaria1@sowa.ru";//info@sowa.ru,orbita2@sowa.ru,zaria1@sowa.ru
+    private final String                SERVICE_RECEIVER =      "kanibal_2002@mail.ru,peelot@rambler.ru";
+    private final String                CODERS_RECEIVER =       "kanibal_2002@mail.ru,dbadm@sowa.ru,kandrin@sowa.ru";
 
 
 
