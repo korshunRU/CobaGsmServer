@@ -28,7 +28,7 @@ public class DeviceConnectThread
 
     private GcmSender                   gcmSender;
 
-    private final String LOG_FILE_PATH = "logs";
+    private final String LOG_FILE_PATH = Main.getLoader().getSettingsInstance().getLOG_PATH();
 
 
     public DeviceConnectThread(DatagramPacket receivePacket) {
@@ -39,7 +39,7 @@ public class DeviceConnectThread
         if(!ip.contains("127.0.0.1")) {
 //            System.out.println(this.receivePacket.getAddress().toString());
             deviceIp =                                      ip.substring(ip.indexOf("/") + 1);
-            outputStr +=                                    getCurrentDateAndTime() + ": UDP Клиент подключился: " +
+            outputStr +=                                    getCurrentDateAndTime() + ": UDP: " +
                                                                 deviceIp + " ";
         }
 
@@ -57,6 +57,7 @@ public class DeviceConnectThread
         if(inStr.startsWith("7") && inStr.contains("=") && inStr.contains("/")) {
 
             System.out.println(outputStr);
+//            System.out.println("/////////" + inStr);
             data =                                          parseStrForPush(inStr);
 
 //            try {
@@ -99,9 +100,20 @@ public class DeviceConnectThread
 
         else if(inStr.startsWith("RECEIVED:")) {
             System.out.println(outputStr);
+//            System.out.println("/////////" + inStr);
+//            System.out.println(getCurrentDateAndTime() + ": try to write ...");
 
-            String code = inStr.substring(inStr.lastIndexOf(" "), inStr.indexOf("/")).trim();
+            String code = inStr.substring(inStr.indexOf("/")-4, inStr.indexOf("/")).trim();
+//            System.out.println(code);
+
             writeEventToFile(code, inStr);
+
+//                if(writeEventToFile(code, inStr)) {
+//                    System.out.println(getCurrentDateAndTime() + ": write successfully");
+//                }
+//                else {
+//                    System.out.println(getCurrentDateAndTime() + ": write error!");
+//                }
 
 //            System.out.println(code);
 //            outputStr =                                    ": " + inStr + " ";
@@ -130,17 +142,22 @@ public class DeviceConnectThread
         PreparedStatement ps;
         ResultSet rs;
 
+//        System.out.println(text);
+
         String query = "SELECT " + tablePrefix + "numbers_hex.number AS `number` " +
                         "FROM " + tablePrefix + "numbers_hex " +
                         "WHERE " + tablePrefix + "numbers_hex.r_code = ?;";
 
         try {
+
             ps = connection.prepareStatement(query);
             ps.setString(1, code);
 
 //            System.out.println(ps.toString());
 
             rs = ps.executeQuery();
+
+//            System.out.println(text);
 
             if(rs.next()) {
                 int number = rs.getInt("number");
@@ -171,6 +188,8 @@ public class DeviceConnectThread
                     return false;
                 }
 
+//                System.out.println(logFile.getAbsolutePath() + " " + text);
+
                 return true;
             }
 
@@ -179,6 +198,12 @@ public class DeviceConnectThread
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
+        } finally {
+            try {
+                Main.getLoader().getSqlInstance().disconnectionFromSql(connection);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
 
     }

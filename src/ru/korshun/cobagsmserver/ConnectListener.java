@@ -94,7 +94,7 @@ public class ConnectListener
 
             while(true) {
 //
-                byte[] receiveData =                        new byte[128];
+                byte[] receiveData =                        new byte[64];
                 DatagramPacket receivePacket =              new DatagramPacket(receiveData, receiveData.length);
                 serverSocket.receive(receivePacket);
 //
