@@ -865,14 +865,14 @@ public class ClientConnectThread
         Session session =                                       Session.getInstance(properties, auth);
 
         // creates a new e-mail message
-        Message msg =                                           new MimeMessage(session);
+        MimeMessage msg =                                           new MimeMessage(session);
 
         msg.setFrom(new InternetAddress(Main.getLoader().getSettingsInstance().getMAIL_LOGIN(), subj));
         InternetAddress[] toAddress = { new InternetAddress(address) };
         msg.setRecipients(Message.RecipientType.TO, toAddress);
         InternetAddress[] replyTo = { new InternetAddress(replyToAddress) };
         msg.setReplyTo(replyTo);
-        msg.setSubject(subj);
+        msg.setSubject(subj,"UTF-8");
         msg.setSentDate(new Date());
 
         // creates message part
