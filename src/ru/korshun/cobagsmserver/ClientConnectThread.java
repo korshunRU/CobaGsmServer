@@ -867,7 +867,7 @@ public class ClientConnectThread
         // creates a new e-mail message
         MimeMessage msg =                                           new MimeMessage(session);
 
-        msg.setFrom(new InternetAddress(Main.getLoader().getSettingsInstance().getMAIL_LOGIN(), subj));
+        msg.setFrom(new InternetAddress(Main.getLoader().getSettingsInstance().getMAIL_LOGIN(), subj, "UTF-8"));
         InternetAddress[] toAddress = { new InternetAddress(address) };
         msg.setRecipients(Message.RecipientType.TO, toAddress);
         InternetAddress[] replyTo = { new InternetAddress(replyToAddress) };
