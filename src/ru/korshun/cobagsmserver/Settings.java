@@ -19,6 +19,23 @@ class Settings {
 //    private final String                PASSWORD =          ",fhvfktq82";
     private final String                DB_TABLE_PREFIX =       "coba_";
 
+
+    /**
+     *  Логин и пароль от почтового сервера
+     */
+    private final String                MAIL_LOGIN =            "sowa-noreply@bk.ru";
+    private final String                MAIL_PASSWORD =         "rfrf[rf88gk.[";
+
+
+    /**
+     *  Получатели обращений клиентов
+     */
+    private final String                OFFICE_RECEIVER =       "kanibal_2002@mail.ru,dbadm@sowa.ru";//info@sowa.ru,orbita2@sowa.ru,zaria1@sowa.ru
+    private final String                SERVICE_RECEIVER =      "kanibal_2002@mail.ru,dbadm@sowa.ru";
+    private final String                CODERS_RECEIVER =       "kanibal_2002@mail.ru,dbadm@sowa.ru";
+
+
+
     /**
      *  Погрешность во времени. Требуется для синхронизации метки времени между клиентом и сервером.
      *  В данном случае это число секунд, на которое время сервера может превышать время клиента
@@ -46,7 +63,12 @@ class Settings {
     /**
      *  Количество выгружаемых из БД сигналов по умолчанию, если данное кол-во не пришло с клиента
      */
-    private final int                   ITEMS_COUNT_DEFAULT =   100;
+    private final int                   SIGNAL_ITEMS_COUNT_DEFAULT =   100;
+
+    /**
+     *  Количество выгружаемых из БД заявок\вопросов от клиентов
+     */
+    private final int                   QUERIES_ITEMS_COUNT_DEFAULT =   10;
 
 
     /**
@@ -85,6 +107,26 @@ class Settings {
         return DB_TABLE_PREFIX;
     }
 
+    public String getMAIL_LOGIN() {
+        return MAIL_LOGIN;
+    }
+
+    public String getMAIL_PASSWORD() {
+        return MAIL_PASSWORD;
+    }
+
+    public String getOFFICE_RECEIVER() {
+        return OFFICE_RECEIVER;
+    }
+
+    public String getSERVICE_RECEIVER() {
+        return SERVICE_RECEIVER;
+    }
+
+    public String getCODERS_RECEIVER() {
+        return CODERS_RECEIVER;
+    }
+
     public String getHOST() {
         return HOST;
     }
@@ -121,8 +163,12 @@ class Settings {
         return WORDS_LIST;
     }
 
-    public int getITEMS_COUNT_DEFAULT() {
-        return ITEMS_COUNT_DEFAULT;
+    public int getSIGNAL_ITEMS_COUNT_DEFAULT() {
+        return SIGNAL_ITEMS_COUNT_DEFAULT;
+    }
+
+    public int getQUERIES_ITEMS_COUNT_DEFAULT() {
+        return QUERIES_ITEMS_COUNT_DEFAULT;
     }
 
     public String getLOG_PATH() {

@@ -70,6 +70,24 @@ public abstract class ConnectThread {
     }
 
 
+    /**
+     *   Кодирование (шифрование) строки
+     * @param str               - строка для кодирования
+     * @return
+     */
+    public static String encodeStr(String str) {
+        if(str != null && str.length() > 0) {
+            String encodeString =                               "";
+            for (int x = 0; x < str.length(); x++) {
+                encodeString +=                                 Main.getLoader().getSettingsInstance().getWORDS_LIST()
+                        .indexOf(Character.toString(str.charAt(x))) +
+                        Main.getLoader().getSettingsInstance().getWORDS_DIVIDER();
+            }
+            return encodeString;
+        }
+        return null;
+    }
+
 
 
     /**

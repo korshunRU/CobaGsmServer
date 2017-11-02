@@ -6,6 +6,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import javax.mail.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 import java.io.*;
 import java.net.Socket;
 import java.security.PrivateKey;
@@ -13,8 +18,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 
 @SuppressWarnings("FieldCanBeLocal")
@@ -29,7 +36,7 @@ public class ClientConnectThread
     private boolean                     checkCommand =      true;
     private boolean                     checkIP =           false;
 
-    private final int                   VERSION =           5;
+    private final int                   VERSION =           6;
 
     ClientConnectThread(Socket socket) {
         this.socket =                                       socket;
@@ -116,7 +123,7 @@ public class ClientConnectThread
 
 
 
-
+                    // вход в приложение
                     case "enter":
                         proccessUserLogin(data, out);
                         break;
@@ -126,7 +133,7 @@ public class ClientConnectThread
 
 
 
-
+                    // отправка обновленного токена
                     case "sendToken":
                         updateUserData(data.getString("token"), data.getInt("userId"), data.getString("mac"), null, out);
                         break;
@@ -136,7 +143,7 @@ public class ClientConnectThread
 
 
 
-
+                    // запрос на получение списка объектов
                     case "getObjectsList":
                         getObjectsListFromMySql(data, out);
                         break;
@@ -146,11 +153,18 @@ public class ClientConnectThread
 
 
 
-
+                    // запрос на получение списка сигналов
                     case "getSignalsList":
                         getSignalsListFromMySql(data, out);
                         break;
 
+
+
+
+                    // отправка вопроса
+                    case "sendQueryToOffice":
+                        sendQueryToOffice(data, out);
+                        break;
 
                 }
 
@@ -235,7 +249,7 @@ public class ClientConnectThread
         int objectNumber =                                  Integer.parseInt(data.getString("objectNumber"));
         int step =                                          data.has("step") ?
                                                                 data.getInt("step") :
-                                                                Main.getLoader().getSettingsInstance().getITEMS_COUNT_DEFAULT();
+                                                                Main.getLoader().getSettingsInstance().getSIGNAL_ITEMS_COUNT_DEFAULT();
         int listCount =                                     data.has("listCount") ?
                                                                 data.getInt("listCount") :
                                                                 0;
@@ -294,72 +308,33 @@ public class ClientConnectThread
 
             }
 
-//            signals.put("objectName", decodeStr(objectName).trim());
-//            signals.put("objectAddress", decodeStr(objectAddress).trim());
             signals.put("signals", array);
 
             query = "SELECT " + tablePrefix + "objects.name AS `object_name`, " +
                             tablePrefix + "objects.address AS `object_address` " +
-//                            tablePrefix + "objects_phones.object_phone AS `object_phone`, " +
-//                            "IF(coba_events_codes.desc LIKE '%Постановка%', '1', " +
-//                            "IF(coba_events_codes.desc LIKE '%Снятие%', '2', '0')) as status " +
                     "FROM " + tablePrefix + "objects " +
-//                    "LEFT JOIN " + tablePrefix + "objects_phones " +
-//                        "ON " + tablePrefix + "objects_phones.id_object = " +
-//                                "(SELECT " + tablePrefix + "objects.id " +
-//                                "FROM " + tablePrefix + "objects " +
-//                                "WHERE " + tablePrefix + "objects.number = ? " +
-//                                    "AND " + tablePrefix + "objects.id_client = ?) " +
-//                        "AND " + tablePrefix + "objects_phones.id_client = ? " +
-//                    "LEFT JOIN " + tablePrefix + "events_codes ON " + tablePrefix + "events_codes.id = (" +
-//                                "SELECT event_id " +
-//                                "FROM " + tablePrefix + "events_gsm " +
-//                                "WHERE object_id = " + tablePrefix + "objects.id AND event_id BETWEEN ? AND ? " +
-//                                "ORDER BY time DESC " +
-//                                "LIMIT 0,1) " +
                     "WHERE " + tablePrefix + "objects.id_client = ? " +
                         "AND " + tablePrefix + "objects.number = ?;";
 
             ps =                                            connection.prepareStatement(query);
 
-//            ps.setInt(1, objectNumber);
-//            ps.setInt(2, userId);
-//            ps.setInt(3, userId);
-//            ps.setInt(4, 1);
-//            ps.setInt(5, 35);
             ps.setInt(1, userId);
             ps.setInt(2, objectNumber);
 
             rs =                                            ps.executeQuery();
 
-//            System.out.println(ps.toString());
-
             String objectName = "-";
             String objectAddress = "-";
-//            String objectPhone = "";
-//            String objectGuardStatus = "";
 
             if(rs.next()) {
                 objectName =                                rs.getString("object_name");
                 objectAddress =                             rs.getString("object_address");
-//                objectPhone =                               rs.getString("object_phone");
-//                objectGuardStatus =                         rs.getString("status");
             }
 
             signals.put("objectName", objectName == null ? "-" : decodeStr(objectName).trim());
             signals.put("objectAddress", objectAddress == null ? "-" : decodeStr(objectAddress).trim());
-//            signals.put("objectPhone", objectPhone);
-//            signals.put("status", objectGuardStatus);
-
-//            System.out.println(array.length());
-
-//            returnStatus.put("data", signals);
-//            returnStatus.put("status", 1);
 
             sendOperationStatusToClient(out, STATUS_COMPLITE, signals);
-
-//            out.writeUTF(returnStatus.toString());
-//            out.flush();
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -444,7 +419,6 @@ public class ClientConnectThread
 //        DESC LIMIT 0,1)
 //        LEFT JOIN coba_objects ON coba_objects.id = coba_objects_phones.id_object
 //        WHERE coba_objects.id_client = 19;
-
 
 
         try {
@@ -562,6 +536,360 @@ public class ClientConnectThread
 
     }
 
+
+
+
+
+
+    /**
+     *  Функция добавляет в БД вопрос пользователя и отправляет его на e-mail тому, кто этот вопрос будет обрабатывать
+     * @param data              - json c userId клиента
+     * @param out               - ссылка на DataOutputStream для отправки сообщения клиенту
+     * @throws IOException
+     */
+    private void sendQueryToOffice(JSONObject data, DataOutputStream out) throws IOException {
+
+        Connection connection =                             createConnect();
+        PreparedStatement ps;
+        ResultSet rs;
+
+        JSONObject clientsQueries;
+
+        int lastId =                                        0;
+
+        String userMail = null, userName = null, objects = "";
+        StringBuilder sb = new StringBuilder();
+
+        if(connection == null) {
+            sendOperationStatusToClient(out, STATUS_ERROR, "Сервер БД недоступен");
+            return;
+        }
+
+        int userId =                                        data.getInt("userId");
+
+        if(userId == 0) {
+            sendOperationStatusToClient(out, STATUS_ERROR, "Неверный идентификатор пользователя");
+            return;
+        }
+
+        String theme =                                      data.has("queryTheme") ? data.getString("queryTheme") : null;
+        String text =                                       data.has("queryText") ? data.getString("queryText") : null;
+
+
+
+        // Если параметры темы и текста не существуют, вытаскиваем все запросы пользователя и отправляем их на клиента
+        if(theme == null || text == null) {
+            clientsQueries = getClientQueries(userId);
+
+            if(clientsQueries == null) {
+                sendOperationStatusToClient(out, STATUS_ERROR, "Ошибка при запросе данных");
+            }
+            else {
+                sendOperationStatusToClient(out, STATUS_COMPLITE, clientsQueries);
+            }
+
+        }
+
+
+
+
+        // Если параметры темы и текста существуют - добавляем запрос в БД
+        else {
+
+            String query =  "INSERT INTO " + tablePrefix + "feedback_mobile " +
+                            "SET " +    tablePrefix + "feedback_mobile.id_user = ?, " +
+                                        tablePrefix + "feedback_mobile.date = ?, " +
+                                        tablePrefix + "feedback_mobile.theme = ?, " +
+                                        tablePrefix + "feedback_mobile.text = ?; ";
+
+            try {
+                String encodeTheme = encodeStr(theme);
+                String encodeText = encodeStr(text);
+                ps =                                        connection.prepareStatement(query,
+                                                                PreparedStatement.RETURN_GENERATED_KEYS);
+
+                ps.setInt(1, userId);
+                ps.setString(2, getCurrentDateAndTimeForMySQL());
+                ps.setString(3, encodeTheme);
+                ps.setString(4, encodeText);
+
+                ps.executeUpdate();
+
+                ResultSet keys = ps.getGeneratedKeys();
+
+                if(keys.next()) {
+                    lastId = keys.getInt(1);
+                }
+
+                clientsQueries = getClientQueries(userId);
+
+                if(clientsQueries == null) {
+                    sendOperationStatusToClient(out, STATUS_ERROR, "Ошибка при запросе данных");
+                }
+                else {
+                    sendOperationStatusToClient(out, STATUS_COMPLITE, clientsQueries);
+                }
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+                sendOperationStatusToClient(out, STATUS_ERROR, "Ошибка формирования запроса");
+                return;
+//            System.out.println(getCurrentDateAndTime() + ": " + e.getMessage());
+            } finally {
+                try {
+                    Main.getLoader().getSqlInstance().disconnectionFromSql(connection);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+
+
+
+            // Вытаскиваем данные пользователя, что бы отправить их в письме
+            connection = createConnect();
+
+            query = "SELECT " + tablePrefix + "users.login AS `login`, " +
+                                tablePrefix + "users.name AS `name`, " +
+                                tablePrefix + "objects.number AS `objectNumber`, " +
+                                tablePrefix + "objects.address AS `objectAddress` " +
+                    "FROM " + tablePrefix + "objects " +
+                    "LEFT JOIN " + tablePrefix + "users ON " + tablePrefix + "users.id = ? " +
+                    "WHERE " + tablePrefix + "objects.id_client = ?";
+
+            try {
+                ps = connection.prepareStatement(query);
+
+                ps.setInt(1, userId);
+                ps.setInt(2, userId);
+
+                rs = ps.executeQuery();
+
+                while(rs.next()) {
+                    userMail = rs.getString("login");
+                    userName = decodeStr(rs.getString("name"));
+
+                    objects = sb.append(String.format("%s (%s)</br>",
+                            rs.getString("objectNumber"), decodeStr(rs.getString("objectAddress")))).toString();
+                }
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+                sendOperationStatusToClient(out, STATUS_ERROR, "Ошибка при запросе данных");
+                return;
+            } finally {
+                try {
+                    Main.getLoader().getSqlInstance().disconnectionFromSql(connection);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            sb = new StringBuilder();
+
+            String body = sb.append(String.format("<b>Клиент</b>: %s</br><b>Объекты</b>:</br>%s</br>" +
+                    "<b>Текст обращения</b>:</br>", userName, objects)).append(text).toString();
+
+            String[] receivers = getQueryReceivers(theme);
+            int errors = 0;
+
+            // Отправляем запрос клиента всем тем, кто должен его получить в зависимости от категории
+            for(String receiver : receivers) {
+                try {
+                    sendMail(receiver, body, userMail);
+                } catch (MessagingException e) {
+                    e.printStackTrace();
+                    errors++;
+                }
+            }
+
+            // Тут проверяем, были ли ошибки при отправке. Если хоть одно письмо ушло, то ставим пометку в БД
+            // что запрос обработан
+            if(errors < receivers.length) {
+                connection = createConnect();
+
+                query = "UPDATE " + tablePrefix + "feedback_mobile " +
+                        "SET " + tablePrefix + "feedback_mobile.status = ? " +
+                        "WHERE " + tablePrefix + "feedback_mobile.id = ?;";
+
+                try {
+                    ps = connection.prepareStatement(query);
+
+                    ps.setInt(1, 1);
+                    ps.setInt(2, lastId);
+
+                    ps.executeUpdate();
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+            }
+
+
+//            System.out.println(getCurrentDateAndTime() + ": Добавление обращения, тема: " + theme + ", " +
+//                    "текст: " + text);
+        }
+
+//        sendOperationStatusToClient(out, STATUS_COMPLITE, clientsQueries);
+
+    }
+
+
+
+
+    /**
+     *  Функция выдергивает из БД все запросы клиента и возвращает их в виде JSONObject
+     * @param userId                - ID пользователя, чьи запросы ищем
+     * @return                      - возвращается JSONObject с запросами
+     */
+    private JSONObject getClientQueries(int userId) {
+        JSONObject returnObject = new JSONObject();
+        JSONArray array = new JSONArray();
+
+        Connection connection = createConnect();
+        PreparedStatement ps;
+        ResultSet rs;
+
+        String query = "SELECT " +  tablePrefix + "feedback_mobile.theme AS `theme`, " +
+                                    tablePrefix + "feedback_mobile.text AS `text`, " +
+                                    tablePrefix + "feedback_mobile.status AS `status`, " +
+                                    "DATE_FORMAT(" +  tablePrefix + "feedback_mobile.date, '%d.%m.%Y') AS `date`, " +
+                                    "DATE_FORMAT(" +  tablePrefix + "feedback_mobile.date, '%H:%i:%S') AS `time` " +
+                        "FROM " + tablePrefix + "feedback_mobile " +
+                        "WHERE " + tablePrefix + "feedback_mobile.id_user = ? " +
+                        "ORDER BY " + tablePrefix + "feedback_mobile.date DESC " +
+                        "LIMIT 0,?;";
+
+        try {
+            ps = connection.prepareStatement(query);
+
+            ps.setInt(1, userId);
+            ps.setInt(2, Main.getLoader().getSettingsInstance().getQUERIES_ITEMS_COUNT_DEFAULT());
+
+            rs = ps.executeQuery();
+
+            while(rs.next()) {
+                String date =                               rs.getString("date");
+                String time =                               rs.getString("time");
+                String theme =                              decodeStr(rs.getString("theme"));
+                String text =                               decodeStr(rs.getString("text"));
+                String status =                             rs.getString("status");
+
+                Map<String, String> queries =                new HashMap<>();
+
+                queries.put("status", status);
+                queries.put("date", date);
+                queries.put("time", time);
+                queries.put("theme", theme);
+                queries.put("text", text);
+
+                array.put(queries);
+            }
+
+            returnObject.put("queries", array);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            try {
+                Main.getLoader().getSqlInstance().disconnectionFromSql(connection);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+
+        return returnObject;
+    }
+
+
+
+
+    /**
+     * Тупая функция. В зависимости от темы выбираем получателей
+     * @param theme             - тема обращен0ия
+     * @return                  - возвращается массив с адресами получателей
+     */
+    private String[] getQueryReceivers(String theme) {
+
+        String[] receivers;
+
+        if(theme.contains("Договорной")) {
+            receivers = Main.getLoader().getSettingsInstance().getOFFICE_RECEIVER().split(",");
+        }
+        else if(theme.contains("Сервисная")) {
+            receivers = Main.getLoader().getSettingsInstance().getSERVICE_RECEIVER().split(",");
+        }
+        else if(theme.contains("разработки")) {
+            receivers = Main.getLoader().getSettingsInstance().getCODERS_RECEIVER().split(",");
+        }
+        else {
+            receivers = Main.getLoader().getSettingsInstance().getCODERS_RECEIVER().split(",");
+        }
+
+        return receivers;
+    }
+
+
+
+    /**
+     *  Функция отправляет электронное письмо клиенту
+     * @param address                   - email получателя
+     * @param body                      - текст сообщения
+     * @param replyToAddress            - адрес для обратного ответа (адрес клиента)
+     * @throws UnsupportedEncodingException
+     * @throws MessagingException
+     */
+    private void sendMail(String address, String body, String replyToAddress) throws UnsupportedEncodingException, MessagingException {
+
+        String subj =                                           "\"СОВА\" - мобильное приложение";
+
+        Properties properties =                                 new Properties();
+        properties.put("mail.smtp.socketFactory.port", "465");
+        properties.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+        properties.put("mail.smtp.host", "smtp.mail.ru");
+        properties.put("mail.smtp.auth", "true");
+        properties.put("mail.smtp.starttls.enable", "true");
+        properties.put("mail.user", Main.getLoader().getSettingsInstance().getMAIL_LOGIN());
+        properties.put("mail.password", Main.getLoader().getSettingsInstance().getMAIL_PASSWORD());
+
+        // creates a new session with an authenticator
+        Authenticator auth =                                    new Authenticator() {
+            public PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(
+                        Main.getLoader().getSettingsInstance().getMAIL_LOGIN(),
+                        Main.getLoader().getSettingsInstance().getMAIL_PASSWORD());
+            }
+        };
+        Session session =                                       Session.getInstance(properties, auth);
+
+        // creates a new e-mail message
+        Message msg =                                           new MimeMessage(session);
+
+        msg.setFrom(new InternetAddress(Main.getLoader().getSettingsInstance().getMAIL_LOGIN(), subj));
+        InternetAddress[] toAddress = { new InternetAddress(address) };
+        msg.setRecipients(Message.RecipientType.TO, toAddress);
+        InternetAddress[] replyTo = { new InternetAddress(replyToAddress) };
+        msg.setReplyTo(replyTo);
+        msg.setSubject(subj);
+        msg.setSentDate(new Date());
+
+        // creates message part
+        MimeBodyPart messageBodyPart =                          new MimeBodyPart();
+        messageBodyPart.setContent(body, "text/html; charset=UTF-8");
+
+        // creates multi-part
+        Multipart multipart =                                   new MimeMultipart();
+        multipart.addBodyPart(messageBodyPart);
+
+        // sets the multi-part as e-mail's content
+        msg.setContent(multipart);
+
+        // sends the e-mail
+        Transport.send(msg);
+
+    }
 
 
 
