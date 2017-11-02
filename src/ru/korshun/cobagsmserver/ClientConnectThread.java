@@ -775,7 +775,7 @@ public class ClientConnectThread
                 String text =                               decodeStr(rs.getString("text"));
                 String status =                             rs.getString("status");
 
-                Map<String, String> queries =                new HashMap<>();
+                Map<String, String> queries =               new HashMap<>();
 
                 queries.put("status", status);
                 queries.put("date", date);
