@@ -34,9 +34,9 @@ public class ClientConnectThread
     private String                      outputStr =         "";
 
     private boolean                     checkCommand =      true;
-    private boolean                     checkIP =           true;
+    private boolean                     checkIP =           false;
 
-    private final int                   VERSION =           6;
+    private final int                   VERSION =           7;
 
     ClientConnectThread(Socket socket) {
         this.socket =                                       socket;
@@ -164,6 +164,13 @@ public class ClientConnectThread
                     // отправка вопроса
                     case "sendQueryToOffice":
                         sendQueryToOffice(data, out);
+                        break;
+
+
+
+                    // загрузка "опций"
+                    case "getOptionsList":
+                        getOptionsList(data, out);
                         break;
 
                 }
@@ -738,10 +745,79 @@ public class ClientConnectThread
 
 
     /**
-     *  Функция выдергивает из БД все запросы клиента и возвращает их в виде JSONObject
-     * @param userId                - ID пользователя, чьи запросы ищем
-     * @return                      - возвращается JSONObject с запросами
+     *  Функция лезет в БД и получает список доп. возможностей
+     * @param data              - json c userId и номером объекта клиента
+     * @param out               - ссылка на DataOutputStream для отправки сообщения клиенту
+     * @throws IOException
      */
+    private void getOptionsList(JSONObject data, DataOutputStream out) throws IOException {
+
+        JSONObject clientsQueries = new JSONObject();
+        JSONArray array = new JSONArray();
+
+        Connection connection =                             createConnect();
+        PreparedStatement ps;
+        ResultSet rs;
+
+        if(connection == null) {
+            sendOperationStatusToClient(out, STATUS_ERROR, "Сервер БД недоступен");
+            return;
+        }
+
+        int userId =                                        data.getInt("userId");
+
+        if(userId == 0) {
+            sendOperationStatusToClient(out, STATUS_ERROR, "Неверный идентификатор пользователя");
+            return;
+        }
+
+
+        String query = "SELECT " +  tablePrefix + "options.text AS `text`, " +
+                                    tablePrefix + "options.hidden_text AS `hidden_text` " +
+                        "FROM " + tablePrefix + "options " +
+                        "ORDER BY " + tablePrefix + "options.text ASC;";
+
+        try {
+            ps = connection.prepareStatement(query);
+
+            rs = ps.executeQuery();
+
+            while(rs.next()) {
+                String text =                               rs.getString("text");
+                String hiddenText =                         rs.getString("hidden_text");
+
+                Map<String, String> options =               new HashMap<>();
+
+                options.put("text", text);
+                options.put("hiddenText", hiddenText);
+
+                array.put(options);
+            }
+
+            clientsQueries.put("options", array);
+
+            sendOperationStatusToClient(out, STATUS_COMPLITE, clientsQueries);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            sendOperationStatusToClient(out, STATUS_ERROR, "Ошибка при запросе данных");
+        } finally {
+            try {
+                Main.getLoader().getSqlInstance().disconnectionFromSql(connection);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+
+
+        /**
+         *  Функция выдергивает из БД все запросы клиента и возвращает их в виде JSONObject
+         * @param userId                - ID пользователя, чьи запросы ищем
+         * @return                      - возвращается JSONObject с запросами
+         */
     private JSONObject getClientQueries(int userId) {
         JSONObject returnObject = new JSONObject();
         JSONArray array = new JSONArray();
