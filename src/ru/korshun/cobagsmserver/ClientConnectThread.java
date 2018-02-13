@@ -18,10 +18,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 
 @SuppressWarnings("FieldCanBeLocal")
@@ -36,7 +33,7 @@ public class ClientConnectThread
     private boolean                     checkCommand =      true;
     private boolean                     checkIP =           true;
 
-    private final int                   VERSION =           7;
+    private final int                   VERSION =           8;
 
     ClientConnectThread(Socket socket) {
         this.socket =                                       socket;
@@ -753,7 +750,17 @@ public class ClientConnectThread
     private void getOptionsList(JSONObject data, DataOutputStream out) throws IOException {
 
         JSONObject clientsQueries = new JSONObject();
-        JSONArray array = new JSONArray();
+        JSONArray items = new JSONArray();
+
+        JSONObject item1 = new JSONObject();
+        JSONObject item2 = new JSONObject();
+        JSONObject item3 = new JSONObject();
+
+        JSONArray array1 = new JSONArray();
+        JSONArray array2 = new JSONArray();
+        JSONArray array3 = new JSONArray();
+
+        List<String> titlesList = new ArrayList<>();
 
         Connection connection =                             createConnect();
         PreparedStatement ps;
@@ -771,11 +778,39 @@ public class ClientConnectThread
             return;
         }
 
+//        String query = "SELECT " +  tablePrefix + "options_titles.title AS `title` " +
+//                        "FROM " + tablePrefix + "options_titles " +
+//                        "ORDER BY " + tablePrefix + "options_titles.id ASC;";
+//
+//        try {
+//
+//            ps = connection.prepareStatement(query);
+//            rs = ps.executeQuery();
+//
+//            while (rs.next()) {
+//
+//            }
+//
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//            sendOperationStatusToClient(out, STATUS_ERROR, "Ошибка при запросе данных");
+//        } finally {
+//            try {
+//                Main.getLoader().getSqlInstance().disconnectionFromSql(connection);
+//            } catch (SQLException e) {
+//                e.printStackTrace();
+//            }
+//        }
 
-        String query = "SELECT " +  tablePrefix + "options.text AS `text`, " +
+
+        String query = "SELECT " +  tablePrefix + "options_titles.id AS `id`, " +
+                                    tablePrefix + "options_titles.title AS `title`, " +
+                                    tablePrefix + "options.text AS `text`, " +
                                     tablePrefix + "options.hidden_text AS `hidden_text` " +
                         "FROM " + tablePrefix + "options " +
-                        "ORDER BY " + tablePrefix + "options.text ASC;";
+                        "LEFT JOIN " + tablePrefix + "options_titles " +
+                            "ON " + tablePrefix + "options.id_title = " + tablePrefix + "options_titles.id " +
+                        "ORDER BY " + tablePrefix + "options_titles.id, " + tablePrefix + "options.text ASC;";
 
         try {
             ps = connection.prepareStatement(query);
@@ -783,18 +818,48 @@ public class ClientConnectThread
             rs = ps.executeQuery();
 
             while(rs.next()) {
+
+                int titleId =                               rs.getInt("id");
+                String title =                              rs.getString("title");
                 String text =                               rs.getString("text");
                 String hiddenText =                         rs.getString("hidden_text");
+
+                if(!titlesList.contains(title)) {
+                    titlesList.add(title);
+                }
 
                 Map<String, String> options =               new HashMap<>();
 
                 options.put("text", text);
                 options.put("hiddenText", hiddenText);
 
-                array.put(options);
+                switch (titleId) {
+                    case 1:
+                        array1.put(options);
+                        break;
+
+                    case 2:
+                        array2.put(options);
+                        break;
+
+                    case 3:
+                        array3.put(options);
+                        break;
+                }
+
             }
 
-            clientsQueries.put("options", array);
+            item1.put(titlesList.get(0), array1);
+            item2.put(titlesList.get(1), array2);
+            item3.put(titlesList.get(2), array3);
+
+            items.put(item1);
+            items.put(item2);
+            items.put(item3);
+
+            clientsQueries.put("options", items);
+
+//            System.out.println(clientsQueries);
 
             sendOperationStatusToClient(out, STATUS_COMPLITE, clientsQueries);
 
@@ -906,6 +971,7 @@ public class ClientConnectThread
 
         return receivers;
     }
+
 
 
 
