@@ -2,6 +2,8 @@ package ru.korshun.cobagsmserver;
 
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -57,16 +59,56 @@ public abstract class ConnectThread {
     /**
      *  Функция выдергивает из пришедшей строки с блока код события и номер радиоканала
      * @param inStr             - входящая строка вида 7912123456789=4061/B8 дфаовдлавыдал
-     * @return                  - возвращается массив типа {кодсобытия, радиоканал}
+     * @return                  - возвращается массив типа {кодсобытия, радиоканал, телефон_блока}
      */
     protected String[] parseStrForPush(String inStr) {
 
+        String tmp = inStr.substring(inStr.indexOf("=") + 1, inStr.indexOf("/"));
+
         return new String[]{
                 inStr.substring(inStr.indexOf("/") + 1, inStr.indexOf(" ")),
-                inStr.substring(inStr.indexOf("=") + 1, inStr.indexOf("/")),
+                (inStr.contains("$vvk$")) ? getChannelFromObjectNumber(tmp) : tmp,
                 inStr.substring(0, 11)
         };
 
+    }
+
+
+    private String getChannelFromObjectNumber(String objectNumber) {
+
+        Connection connection = createConnect();
+        PreparedStatement ps;
+        ResultSet rs;
+        String channel = null;
+
+//        System.out.println(text);
+
+        String query = "SELECT " + tablePrefix + "numbers_hex.r_code AS `r_code` " +
+                "FROM " + tablePrefix + "numbers_hex " +
+                "WHERE " + tablePrefix + "numbers_hex.number = ?;";
+
+        try {
+
+            ps = connection.prepareStatement(query);
+            ps.setString(1, objectNumber);
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                channel = rs.getString("r_code");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            try {
+                Main.getLoader().getSqlInstance().disconnectionFromSql(connection);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return channel;
     }
 
 

@@ -60,12 +60,6 @@ public class DeviceConnectThread
 //            System.out.println("/////////" + inStr);
             data =                                          parseStrForPush(inStr);
 
-//            try {
-//                logger.writeToLog(deviceIp, data[1]);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-
             addPhoneToMySql(data[1], data[2]);
 
             if (addEventToMySql(data[0], data[1])) {
