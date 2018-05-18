@@ -393,6 +393,7 @@ public class ClientConnectThread
                                     tablePrefix + "users.name AS `user_name`, " +
                                     tablePrefix + "users.address AS `user_address`, " +
                                     tablePrefix + "users.phone AS `user_phone`, " +
+                                    tablePrefix + "users.alert_btn_enabled AS `alert_button_status`, " +
                                     "IF(coba_events_codes.desc LIKE '%Постановка%', '1', " +
                                         "IF(coba_events_codes.desc LIKE '%Снятие%', '2', '0')) as status " +
                         "FROM " + tablePrefix + "objects_phones " +
@@ -440,6 +441,7 @@ public class ClientConnectThread
             String userName = "-";
             String userAddress = "-";
             String userPhone = "-";
+            String alertBtnStatus = "0";
 
             while (rs.next()) {
 
@@ -450,6 +452,7 @@ public class ClientConnectThread
                 userAddress =                               rs.getString("user_address");
                 userPhone =                                 rs.getString("user_phone");
                 String objectPhone =                        rs.getString("phone");
+                alertBtnStatus =                            rs.getString("alert_button_status");
 
                 if(number == null) {
                     continue;
@@ -515,6 +518,7 @@ public class ClientConnectThread
             objects.put("userName", userName == null ? "-" : decodeStr(userName).trim());
             objects.put("userAddress", userAddress == null ? "-" : decodeStr(userAddress).trim());
             objects.put("userPhone", userPhone == null ? "-" : decodeStr(userPhone).trim());
+            objects.put("alertBtnStatus", alertBtnStatus);
             objects.put("objects", array);
 
 

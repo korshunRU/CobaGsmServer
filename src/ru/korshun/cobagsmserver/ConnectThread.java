@@ -74,6 +74,12 @@ public abstract class ConnectThread {
     }
 
 
+    /**
+     *  В случае прихода сигнала с кодом вирутальной кнопки (с моб. устройства), выдергиваем радиоканал
+     *  пришедшего объекта
+     * @param objectNumber      - объект, для которого надо достать радиоканал
+     * @return                  - возвращается HEX код радиоканала
+     */
     private String getChannelFromObjectNumber(String objectNumber) {
 
         Connection connection = createConnect();
