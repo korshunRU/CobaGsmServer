@@ -24,7 +24,7 @@ class Settings {
      *  Логин и пароль от почтового сервера
      */
     private final String                MAIL_LOGIN =            "sowa-noreply@bk.ru";
-    private final String                MAIL_PASSWORD =         "rfrf[rf88gk.[";
+    private final String                MAIL_PASSWORD =         "";
 
 
     /**

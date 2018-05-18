@@ -31,7 +31,7 @@ public class ClientConnectThread
     private String                      outputStr =         "";
 
     private boolean                     checkCommand =      true;
-    private boolean                     checkIP =           true;
+    private boolean                     checkIP =           false;
 
     private final int                   VERSION =           8;
 
